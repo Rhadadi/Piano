@@ -1,0 +1,2524 @@
+<title>Landmark Piano</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Mono:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout concept: a practice-room desk. A pale, cool work surface; the staff and keyboard are the
+   instruments and get the most contrast. One cobalt accent marks landmarks everywhere (notes,
+   keys, guide lines, buttons) so the colour itself teaches "this is an anchor". Amber marks the
+   key or note you are asked about. Green and red are reserved for right and wrong. */
+:root {
+  --bg: #edf0f4;
+  --surface: #ffffff;
+  --surface-2: #f4f6f9;
+  --ink: #14171d;
+  --muted: #5a6371;
+  --line: #d8dde5;
+  --staff: #232831;
+  --accent: #2b4bdb;
+  --accent-ink: #ffffff;
+  --accent-soft: #e4e9fd;
+  --target: #f2b227;
+  --target-ink: #b97800;
+  --good: #17855a;
+  --bad: #c6372e;
+  --sel: #9db2ff;
+  --key-white: #fcfcfa;
+  --key-edge: #b4bac5;
+  --key-black: #171a20;
+  --key-down: #dfe3ea;
+  --key-label: #4b5360;
+  --grp2: #d9e3ff;
+  --grp3: #ffe7b0;
+  --h0: #e5675b; --h1: #ee8a55; --h2: #f2b64d; --h3: #a8d26b; --h4: #5dbe7d; --h5: #2ea66b;
+  --display: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --shadow: 0 1px 2px rgba(20, 23, 29, .06), 0 6px 20px rgba(20, 23, 29, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1014; --surface: #171a20; --surface-2: #1e222a; --ink: #eceff4; --muted: #9ba4b2; --line: #2b313b;
+    --staff: #c7cdd8; --accent: #7f9cff; --accent-ink: #0b1020; --accent-soft: #1f2a55; --target: #f2b227; --target-ink: #f2b227;
+    --good: #41c48b; --bad: #ff7468; --sel: #5a72d6;
+    --key-white: #edebe6; --key-edge: #7b8290; --key-black: #0b0c10; --key-down: #c9ccd3; --key-label: #4b5360;
+    --grp2: #c6d3f8; --grp3: #f6dda0;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1014; --surface: #171a20; --surface-2: #1e222a; --ink: #eceff4; --muted: #9ba4b2; --line: #2b313b;
+  --staff: #c7cdd8; --accent: #7f9cff; --accent-ink: #0b1020; --accent-soft: #1f2a55; --target: #f2b227; --target-ink: #f2b227;
+  --good: #41c48b; --bad: #ff7468; --sel: #5a72d6;
+  --key-white: #edebe6; --key-edge: #7b8290; --key-black: #0b0c10; --key-down: #c9ccd3; --key-label: #4b5360;
+  --grp2: #c6d3f8; --grp3: #f6dda0;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--body); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.015em; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--muted); }
+small { font-size: 13px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.nm { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
+.nm .acc, svg.acc { display: inline-block; height: 1.05em; width: auto; vertical-align: -0.2em; margin: 0 .03em; fill: currentColor; }
+
+/* ---------- shell ---------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1000px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; font: 750 18px var(--display); letter-spacing: -0.02em; margin-right: auto; }
+.logo { width: 30px; height: 30px; color: var(--ink); }
+.logo line { stroke: currentColor; stroke-width: 1.4; }
+.logo circle { fill: var(--accent); }
+#nav { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 12px; border: 1px solid var(--line); }
+#nav button { border: 0; background: transparent; padding: 7px 14px; border-radius: 9px; font: 600 14px var(--body); color: var(--muted); }
+#nav button[aria-current="page"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.tools { display: flex; gap: 6px; }
+.icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 22px; line-height: 1; }
+.icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+@media (max-width: 640px) {
+  #nav { order: 3; flex: 1 1 100%; }
+  #nav button { flex: 1; padding: 8px 4px; }
+}
+.wrap { max-width: 1000px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; }
+.wrap.narrow { max-width: 860px; }
+.page-h { font-size: clamp(26px, 5vw, 34px); font-weight: 750; }
+.lead { color: var(--muted); max-width: 62ch; }
+
+/* ---------- buttons, controls ---------- */
+.btn { font: 600 14px var(--body); padding: 9px 15px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); border-color: var(--accent); }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 6px 11px; font-size: 13px; }
+.btn.big { padding: 13px 26px; font-size: 16px; }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn:disabled { opacity: .45; cursor: default; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 2px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font: 600 13px var(--body); color: var(--muted); }
+.seg button[aria-checked="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.row { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.row:first-of-type { border-top: 0; }
+.meter { height: 6px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.meter.sm { width: 90px; flex: none; }
+.row.lv span:first-child { flex: 1; min-width: 0; }
+.stars { display: inline-flex; gap: 2px; margin-left: auto; }
+.star { width: 15px; height: 15px; fill: var(--line); }
+.star.on { fill: var(--target); }
+
+/* ---------- learn ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: center; padding: 8px 0 4px; }
+.hero-copy { display: flex; flex-direction: column; gap: 14px; }
+.hero h1 { font-size: clamp(28px, 4.4vw, 42px); font-weight: 750; }
+.hero p { color: var(--muted); max-width: 46ch; }
+.hero-chart { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+@media (max-width: 800px) { .hero { grid-template-columns: 1fr; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 11px; font: 600 12.5px var(--body); }
+.chip:hover { border-color: var(--accent); }
+.chip span { font-family: var(--mono); color: var(--accent); margin-left: 6px; }
+.tier { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.tier h2 { font-size: 22px; font-weight: 750; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.tier h2 small { font: 400 14px var(--body); color: var(--muted); }
+.lvl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 14px; }
+.lvl { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lvl.next { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
+.lvl-top { display: flex; align-items: center; gap: 8px; }
+.lvl-n { font: 600 13px var(--mono); color: var(--muted); }
+.badge { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; background: var(--accent); color: var(--accent-ink); padding: 3px 7px; border-radius: 6px; }
+.lvl h3 { font-size: 18px; }
+.lvl p { color: var(--muted); font-size: 14px; flex: 1; }
+.lvl-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+/* ---------- lesson ---------- */
+.crumbs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lesson h2 { font-size: clamp(22px, 4vw, 28px); font-weight: 750; }
+.prose { display: flex; flex-direction: column; gap: 10px; max-width: 64ch; }
+.prose ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.viz { display: flex; flex-direction: column; gap: 12px; background: var(--surface-2); border-radius: 12px; padding: 12px; min-width: 0; }
+.viz-kb { min-width: 0; }
+.dots { display: flex; gap: 6px; justify-content: center; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.dots i.on { background: var(--accent); }
+.les-nav { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+
+/* ---------- drill ---------- */
+.setup { gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; border: 0; padding: 0; margin: 0; }
+.field label, .field legend { font: 600 13px var(--body); color: var(--muted); padding: 0; }
+.d-head { display: flex; align-items: center; gap: 10px; }
+.d-title { flex: 1; font: 700 15px var(--display); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-stats { display: flex; gap: 12px; font: 600 13px var(--mono); color: var(--muted); }
+.progress { height: 4px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: -6px; }
+.progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+.q-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.q-text { font: 600 18px/1.35 var(--body); flex: 1; min-width: 200px; }
+.q-text.big { font: 750 clamp(30px, 6vw, 44px)/1.1 var(--display); padding: 18px 0; }
+.q-tools { display: flex; gap: 6px; }
+.q-tools .btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.stage { min-width: 0; }
+.staff-wrap { margin: 0 auto; width: 100%; }
+.staff-svg { display: block; width: 100%; height: auto; }
+.fb { min-height: 54px; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid transparent; font-size: 15px; }
+.fb:empty { visibility: hidden; }
+.fb.ok { background: color-mix(in srgb, var(--good) 13%, var(--surface)); border-color: var(--good); }
+.fb.bad { background: color-mix(in srgb, var(--bad) 11%, var(--surface)); border-color: var(--bad); }
+.fb.hint { background: var(--accent-soft); border-color: var(--accent); }
+.fb span { min-width: 0; }
+.answer { padding: 14px; }
+.d-foot { display: flex; justify-content: flex-end; min-height: 42px; }
+.kb-nav { display: flex; justify-content: space-between; gap: 8px; }
+.pad { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.pad-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.pad-lbl { font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-right: 4px; }
+.pad-note { color: var(--muted); }
+.pad-sel { font: 600 18px var(--mono); min-width: 5ch; }
+.pbtn { min-width: 54px; height: 54px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); font: 700 21px var(--display); display: inline-grid; place-items: center; }
+.pbtn.wide { min-width: 96px; font-size: 17px; }
+.pbtn:hover { border-color: var(--accent); }
+.pbtn.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pbtn.good { background: var(--good); border-color: var(--good); color: #fff; }
+.pbtn.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+.pbtn .acc { height: 1.3em; }
+.summary h2 { font-size: 30px; font-weight: 750; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+.tiles > div { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.tiles b { font: 750 28px var(--display); font-variant-numeric: tabular-nums; }
+.tiles b small { font-size: 15px; color: var(--muted); font-weight: 600; }
+.tiles span { font-size: 13px; color: var(--muted); }
+.missed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.missed li { padding: 8px 0; border-top: 1px solid var(--line); }
+.missed li:first-child { border-top: 0; }
+
+/* ---------- explore / progress ---------- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.tb { display: flex; flex-direction: column; gap: 4px; }
+.tb > span { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.info { display: grid; grid-template-columns: auto 1fr; gap: 6px 22px; align-items: center; padding: 12px 14px; background: var(--surface-2); border-radius: 12px; }
+@media (max-width: 640px) { .info { grid-template-columns: 1fr; } }
+.info-name { font: 750 34px var(--mono); line-height: 1.1; }
+.info-meta { font: 500 13px var(--mono); color: var(--muted); }
+.info-route { font-size: 15px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.sw.h0 { background: var(--h0); } .sw.h2 { background: var(--h2); } .sw.h3 { background: var(--h3); } .sw.h5 { background: var(--h5); }
+
+/* ---------- settings sheet ---------- */
+.sheet { position: fixed; inset: 0; z-index: 70; background: rgba(8, 10, 14, .5); display: flex; justify-content: flex-end; }
+.sheet-p { width: min(440px, 100%); height: 100%; background: var(--surface); overflow: auto; padding: calc(18px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) 18px; display: flex; flex-direction: column; gap: 14px; }
+.sheet-h { display: flex; justify-content: space-between; align-items: center; }
+.set-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.set-row > div:first-child { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 180px; }
+.set-row small { color: var(--muted); }
+input[type="range"] { accent-color: var(--accent); width: 160px; }
+
+/* ---------- staff (svg) ---------- */
+.staff-svg .ln, .staff-svg .bar { stroke: var(--staff); stroke-width: 1.1; }
+.staff-svg .bar { stroke-width: 1.4; }
+.staff-svg .clef, .staff-svg .ksig, .staff-svg .brace { fill: var(--staff); }
+.staff-svg .ledger { stroke: var(--staff); stroke-width: 1.4; }
+.staff-svg .note { color: var(--ink); pointer-events: none; }
+.staff-svg .note path, .staff-svg .note .accg { fill: currentColor; }
+.staff-svg .note .stem { stroke: currentColor; stroke-width: 1.3; }
+.staff-svg .st-lm { color: var(--accent); }
+.staff-svg .st-target { color: var(--target-ink); }
+.staff-svg .st-good { color: var(--good); }
+.staff-svg .st-bad { color: var(--bad); }
+.staff-svg .st-dim { color: var(--muted); }
+.staff-svg .ghost { opacity: .45; }
+.staff-svg .guide { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; opacity: .65; }
+.staff-svg .guide-lbl { font: 600 9.5px var(--mono); fill: var(--accent); }
+.staff-svg .lbl { font: 600 11px var(--mono); fill: var(--muted); }
+.staff-svg .ott { fill: none; stroke: var(--staff); stroke-width: 1; stroke-dasharray: 4 3; }
+.staff-svg .ott-lbl { font: italic 700 13px var(--body); fill: var(--staff); }
+.staff-svg .hit { fill: transparent; cursor: pointer; }
+.staff-svg .hit:hover { fill: var(--accent); fill-opacity: .13; }
+
+/* ---------- keyboard (svg) ---------- */
+.kb-scroll { overflow-x: auto; padding: 2px 2px 8px; -webkit-overflow-scrolling: touch; }
+.kb-inner { margin: 0 auto; }
+.kb-svg { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.kb-svg .wk { fill: var(--key-white); stroke: var(--key-edge); stroke-width: 1; cursor: pointer; }
+.kb-svg .bk { fill: var(--key-black); cursor: pointer; }
+.kb-svg .wk.g2 { fill: var(--grp2); }
+.kb-svg .wk.g3 { fill: var(--grp3); }
+.kb-svg .wk.down { fill: var(--key-down); }
+.kb-svg .bk.down { fill: #3a404c; }
+.kb-svg [data-s="target"] { fill: var(--target); }
+.kb-svg [data-s="lm"] { fill: var(--accent); }
+.kb-svg [data-s="good"] { fill: var(--good); }
+.kb-svg [data-s="bad"] { fill: var(--bad); }
+.kb-svg [data-s="sel"] { fill: var(--sel); }
+.kb-svg [data-s="h0"] { fill: var(--h0); } .kb-svg [data-s="h1"] { fill: var(--h1); } .kb-svg [data-s="h2"] { fill: var(--h2); }
+.kb-svg [data-s="h3"] { fill: var(--h3); } .kb-svg [data-s="h4"] { fill: var(--h4); } .kb-svg [data-s="h5"] { fill: var(--h5); }
+.kb-svg .kl { font: 600 11px var(--mono); fill: var(--key-label); cursor: pointer; }
+.kb-svg .kl.lm { fill: var(--accent); font-weight: 700; }
+.kb-svg .lm-dot { fill: var(--accent); pointer-events: none; }
+.kb-svg .kl[data-s="lm"], .kb-svg .kl[data-s="good"], .kb-svg .kl[data-s="bad"], .kb-svg .kl[data-s="h0"], .kb-svg .kl[data-s="h5"] { fill: #fff; }
+.kb-svg .kl[data-s="target"], .kb-svg .kl[data-s="sel"], .kb-svg .kl[data-s^="h"] { fill: #14171d; }
+.kb-svg .kl[data-s="h0"], .kb-svg .kl[data-s="h5"] { fill: #fff; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+</style>
+<div id="app">
+  <header class="top"><div class="top-in">
+    <a class="brand" href="#learn" aria-label="Landmark Piano, home">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><line x1="2" x2="30" y1="9" y2="9"/><line x1="2" x2="30" y1="14" y2="14"/><line x1="2" x2="30" y1="19" y2="19"/><line x1="2" x2="30" y1="24" y2="24"/><circle cx="16" cy="21.5" r="4"/></svg>
+      <span>Landmark Piano</span></a>
+    <nav id="nav" aria-label="Sections">
+      <button data-tab="learn">Learn</button><button data-tab="drill">Drill</button><button data-tab="explore">Explore</button><button data-tab="progress">Progress</button>
+    </nav>
+    <div class="tools">
+      <button id="btn-sound" class="icon-btn" aria-label="Sound"></button>
+      <button id="btn-settings" class="icon-btn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 000-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-1.7-1L15 3.4h-4L10.7 6a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 000 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 001.7 1l.3 2.6h4l.3-2.6a7.6 7.6 0 001.7-1l2.4 1 2-3.4-2-1.6zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
+    </div>
+  </div></header>
+  <main id="view"></main>
+</div>
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="sheet-p">
+    <div class="sheet-h"><h2>Settings</h2><button class="icon-btn sheet-x" aria-label="Close settings">×</button></div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ---- glyphs.js ---- */
+// Notation glyph outlines extracted from Bravura (SMuFL), SIL Open Font License 1.1.
+// Units: 1000 per em, 250 per staff space. y axis points up, origin on the staff line / notehead centre.
+const GLYPHS = {
+  gClef: { w: 671, b: [0, -658, 671, 1098], d: 'M376 415C374 427 376 428 382 434C490 535 572 662 572 815C572 902 548 988 507 1048C492 1070 466 1098 455 1098C441 1098 410 1072 390 1050C316 968 292 843 292 739C292 681 299 616 306 575C308 563 309 561 297 551C153 432 0 289 0 87C0 -87 119 -252 364 -252C387 -252 413 -250 433 -246C444 -244 446 -243 448 -255C460 -322 475 -409 475 -456C475 -604 375 -622 316 -622C262 -622 236 -606 236 -593C236 -586 245 -583 268 -576C299 -567 335 -540 335 -482C335 -427 300 -380 239 -380C172 -380 132 -433 132 -495C132 -560 171 -658 322 -658C389 -658 519 -628 519 -458C519 -401 501 -306 490 -244C488 -232 489 -233 503 -227C604 -187 671 -102 671 11C671 139 577 252 430 252C404 252 404 252 401 270ZM470 943C503 943 530 916 530 861C530 750 435 660 356 591C349 585 345 586 343 599C339 625 337 659 337 691C337 847 409 943 470 943ZM361 262C364 243 364 244 346 238C258 208 201 129 201 44C201 -46 248 -110 316 -133C324 -136 336 -139 343 -139C351 -139 355 -134 355 -128C355 -121 347 -118 340 -115C298 -97 268 -54 268 -8C268 49 307 92 368 109C384 113 386 112 388 101L438 -197C440 -208 439 -208 424 -211C408 -214 388 -216 368 -216C193 -216 80 -119 80 20C80 79 90 158 173 252C233 319 279 356 326 394C336 402 338 401 340 390ZM430 103C428 115 429 118 441 117C522 110 589 42 589 -46C589 -109 551 -160 495 -188C483 -194 481 -194 479 -182Z' },
+  fClef: { w: 684, b: [-5, -635, 684, 262], d: 'M252 262C78 262 0 135 0 39C0 -41 42 -110 123 -110C186 -110 229 -66 229 -4C229 60 182 100 133 100C106 100 96 93 83 93C70 93 67 101 67 111C67 151 127 224 229 224C335 224 381 120 381 -37C381 -316 243 -472 10 -605C1 -610 -5 -615 -5 -623C-5 -629 -1 -635 8 -635C13 -635 19 -633 25 -630C271 -510 531 -332 531 -28C531 146 425 262 252 262ZM629 180C598 180 574 156 574 125C574 94 598 70 629 70C660 70 684 94 684 125C684 156 660 180 629 180ZM630 -71C599 -71 576 -94 576 -125C576 -156 599 -179 630 -179C661 -179 684 -156 684 -125C684 -94 661 -71 630 -71Z' },
+  cClef: { w: 699, b: [0, -506, 699, 506], d: 'M230 482C230 496 223 503 209 503H208C194 503 187 496 187 482V-482C187 -496 194 -503 208 -503H209C223 -503 230 -496 230 -482V-44C230 -36 235 -37 239 -38C265 -45 307 -71 328 -184C331 -200 337 -209 347 -209C358 -209 363 -199 368 -182C381 -138 404 -89 475 -89C540 -89 558 -153 558 -284C558 -415 535 -474 452 -474C438 -474 367 -468 367 -447C367 -442 383 -436 394 -432C414 -425 434 -405 434 -367C434 -323 405 -298 366 -298C323 -298 289 -327 289 -380C289 -443 344 -506 463 -506C627 -506 699 -391 699 -287C699 -149 623 -53 490 -53C461 -53 442 -58 429 -62C419 -65 409 -67 400 -61C386 -52 364 -20 364 0C364 20 386 52 400 61C409 67 419 65 429 62C442 58 461 53 490 53C623 53 699 149 699 287C699 391 627 506 463 506C344 506 289 443 289 380C289 327 323 298 366 298C405 298 434 323 434 367C434 405 414 425 394 432C383 436 367 442 367 447C367 468 438 474 452 474C535 474 558 415 558 284C558 153 540 89 475 89C404 89 381 138 368 182C363 199 358 209 347 209C337 209 331 200 328 184C307 71 265 45 239 38C235 37 230 36 230 44ZM21 503C7 503 0 496 0 482V-482C0 -496 7 -503 21 -503H107C121 -503 128 -496 128 -482V482C128 496 121 503 107 503Z' },
+  sharp: { w: 249, b: [0, -348, 249, 350], d: 'M237 118C244 121 249 129 249 135V206C249 211 246 214 242 214C240 214 239 214 237 213C237 213 217 205 212 204C205 204 198 209 198 217V339C198 345 192 350 184 350C174 350 168 345 168 339V209C167 199 164 186 155 180C143 173 109 159 92 155C83 155 80 167 80 175V295C80 301 73 306 66 306C56 306 50 301 50 295V160C50 146 44 136 38 133C32 130 12 122 12 122C5 120 0 112 0 106V35C0 29 3 26 9 26L11 27C12 27 27 33 35 37L36 38C44 38 50 28 50 20V-79C50 -90 45 -99 39 -102C33 -104 12 -113 12 -113C5 -115 0 -123 0 -129V-200C0 -206 3 -209 9 -209L11 -208C12 -208 26 -202 35 -199C36 -198 37 -198 38 -198C45 -198 50 -209 50 -214V-337C50 -343 56 -348 63 -348C73 -348 80 -343 80 -337V-198C80 -185 85 -178 90 -176L151 -151C151 -151 152 -151 152 -151L154 -150C163 -150 168 -162 168 -168V-293C168 -299 174 -304 181 -304C192 -304 198 -299 198 -293V-151C198 -143 202 -131 209 -128C216 -125 237 -117 237 -117C244 -114 249 -106 249 -100V-29C249 -24 246 -21 242 -21C240 -21 239 -21 237 -22L211 -32C205 -32 198 -26 198 -14V79C198 86 203 105 211 108ZM168 -45C162 -65 115 -85 92 -85C86 -85 81 -83 80 -80C78 -76 77 -54 77 -30C77 1 78 36 80 44C82 61 128 82 153 82C160 82 166 80 168 76C170 71 172 46 172 19C172 -8 170 -36 168 -45Z' },
+  flat: { w: 226, b: [0, -175, 226, 439], d: 'M12 -170C15 -174 18 -175 21 -175C24 -175 27 -173 27 -173C57 -156 81 -129 106 -112C195 -50 226 11 226 57C226 114 182 150 136 153C119 153 95 145 81 136C75 131 64 122 59 122C57 122 56 122 54 123C47 126 43 133 43 140C44 162 50 402 50 422C50 433 41 439 31 439C17 439 1 429 0 411C0 411 4 -160 12 -170ZM47 -81C47 -81 44 -21 44 19C44 35 45 47 46 51C53 71 93 100 116 100C145 100 157 67 157 42C157 -12 111 -66 68 -93C64 -95 61 -96 58 -96C49 -96 47 -86 47 -81Z' },
+  natural: { w: 168, b: [0, -335, 168, 341], d: 'M141 181C139 181 138 180 137 180C137 180 73 157 47 157C41 157 37 158 37 162V329C37 336 31 341 25 341H12C5 341 0 336 0 329V-186C0 -192 3 -195 9 -195L11 -194C12 -194 14 -194 15 -193C29 -187 85 -163 114 -163C124 -163 131 -166 131 -174V-323C131 -330 136 -335 143 -335H156C162 -335 168 -330 168 -323V179C168 184 164 187 160 187C159 187 157 187 156 186ZM37 39C37 53 98 79 122 79C128 79 131 78 131 74V-29C131 -47 74 -70 49 -70C42 -70 37 -68 37 -64Z' },
+  dsharp: { w: 250, b: [0, -125, 247, 127], d: 'M190 -32C179 -26 143 -6 143 1C143 15 176 30 190 35C191 35 192 35 193 35L199 34C211 34 230 36 240 44C245 49 247 64 247 80C247 121 244 127 203 127C185 127 167 125 162 120C158 117 157 99 157 81C152 70 136 34 124 34C110 34 94 67 90 81C90 98 87 116 82 120C78 125 62 127 46 127C29 127 11 125 5 120C2 118 0 101 0 83C0 65 2 47 5 44C12 38 30 34 47 34C51 34 54 35 57 35C68 29 104 9 104 2C104 -11 72 -27 58 -32H48C30 -32 11 -34 5 -39C2 -42 0 -59 0 -77C0 -95 2 -113 5 -115C12 -121 28 -125 45 -125C60 -125 76 -122 82 -115C88 -110 90 -93 90 -77C90 -76 91 -74 92 -73C98 -59 110 -31 123 -31C136 -31 153 -63 157 -77C157 -95 158 -112 162 -115C169 -121 185 -125 202 -125C240 -125 247 -115 247 -79C247 -62 244 -44 240 -39C235 -34 217 -32 200 -32Z' },
+  dflat: { w: 413, b: [0, -175, 411, 437], d: 'M314 151C296 151 283 144 267 135C260 131 252 122 243 122C241 122 239 122 238 123C231 125 228 132 228 140C228 161 234 402 234 421C234 432 225 437 215 437C202 437 186 428 184 411C184 411 185 274 187 135C172 145 155 151 136 151H130C111 151 99 144 83 135C75 131 68 122 59 122C57 122 56 122 54 123C47 125 43 132 43 140C43 161 50 402 50 421C50 432 41 437 31 437C17 437 1 428 0 411C0 411 5 -161 12 -170C15 -174 18 -175 21 -175C24 -175 27 -173 27 -173C58 -157 83 -129 106 -112C143 -86 171 -59 190 -35C192 -110 194 -167 197 -170C200 -174 203 -175 205 -175C208 -175 211 -173 211 -173C242 -157 266 -129 289 -113C379 -50 411 11 411 57C411 113 367 150 320 151ZM67 -93C64 -95 60 -96 58 -96C50 -96 47 -86 47 -80C47 -80 44 -21 44 18C44 34 45 46 46 50C52 70 93 100 117 100C147 100 157 66 157 41C157 -15 112 -65 67 -93ZM251 -93C247 -95 244 -96 242 -96C234 -96 231 -86 231 -80C231 -80 228 -11 228 27C228 38 228 47 229 50C235 70 277 100 301 100C311 100 319 97 325 90C334 78 340 61 340 41C340 -15 296 -65 251 -93Z' },
+  whole: { w: 422, b: [0, -125, 422, 125], d: 'M216 125C83 125 0 70 0 2C0 -65 57 -125 206 -125C370 -125 422 -68 422 2C422 73 309 125 216 125ZM111 63C122 98 159 103 190 103C259 103 314 29 314 -31C314 -62 301 -90 268 -98C258 -101 247 -102 237 -102C201 -102 164 -78 143 -50C123 -27 108 7 108 39C108 47 109 55 111 63Z' },
+  black: { w: 295, b: [0, -125, 295, 125], d: 'M97 -125C186 -125 295 -43 295 42C295 93 255 125 198 125C88 125 0 44 0 -42C0 -94 43 -125 97 -125Z' },
+  brace: { w: 84, b: [2, 0, 82, 997], d: 'M20 498C49 516 82 587 82 646C82 651 82 657 81 662C74 722 44 815 44 869C44 921 67 971 72 980C75 986 77 987 77 990C77 993 74 997 71 997C69 997 67 995 63 990C41 963 14 905 14 805C14 706 49 666 49 603C49 556 30 530 2 498C20 478 49 462 49 397C49 327 14 265 14 192C14 92 41 34 63 6C67 1 69 0 71 0C74 0 77 3 77 6C77 9 76 11 72 17C67 25 44 75 44 128C44 181 74 275 81 334C82 339 82 344 82 350C82 409 49 480 20 498Z' },
+};
+
+/* ---- theory.js ---- */
+// ---------------------------------------------------------------------------
+// Music theory core. A note is { l: letter 0-6 (C..B), o: octave, a: alteration -2..2 }.
+// Optional display flags: hide (accidental comes from the key signature), nat (show a natural sign).
+// ---------------------------------------------------------------------------
+const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const PCS = [0, 2, 4, 5, 7, 9, 11];
+const INTERVAL_NAMES = ['unison', '2nd', '3rd', '4th', '5th', '6th', '7th', 'octave'];
+const ACC_ASCII = { '-2': 'bb', '-1': 'b', '0': '', '1': '#', '2': 'x' };
+const ACC_WORDS = { '-2': 'double flat', '-1': 'flat', '0': '', '1': 'sharp', '2': 'double sharp' };
+const ACC_GLYPH = { '-2': 'dflat', '-1': 'flat', '0': 'natural', '1': 'sharp', '2': 'dsharp' };
+
+const mk = (l, o, a = 0, extra) => Object.assign({ l, o, a }, extra);
+const stepOf = n => n.o * 7 + n.l;
+const midiOf = n => 12 * (n.o + 1) + PCS[n.l] + n.a;
+const fromStep = (s, a = 0, extra) => mk(((s % 7) + 7) % 7, Math.floor(s / 7), a, extra);
+const isBlackMidi = m => [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
+
+function parseNote(str) {
+  const m = /^([A-G])(bb|b|#|x|)(-?\d)$/.exec(str);
+  if (!m) throw new Error('bad note ' + str);
+  return mk(LETTERS.indexOf(m[1]), +m[3], { bb: -2, b: -1, '': 0, '#': 1, x: 2 }[m[2]]);
+}
+const ascii = n => LETTERS[n.l] + ACC_ASCII[n.a] + n.o;
+const letterName = n => LETTERS[n.l] + (n.a ? ' ' + ACC_WORDS[n.a] : '');
+const spoken = n => letterName(n) + ' ' + n.o;
+
+const SHARP_SPELL = { 1: [0, 1], 3: [1, 1], 6: [3, 1], 8: [4, 1], 10: [5, 1] };
+const FLAT_SPELL = { 1: [1, -1], 3: [2, -1], 6: [4, -1], 8: [5, -1], 10: [6, -1] };
+function noteFromMidi(m, flats = false) {
+  const pc = ((m % 12) + 12) % 12, oct = Math.floor(m / 12) - 1;
+  const w = PCS.indexOf(pc);
+  if (w >= 0) return mk(w, oct, 0);
+  const [l, a] = (flats ? FLAT_SPELL : SHARP_SPELL)[pc];
+  return mk(l, oct, a);
+}
+
+/** Inline SVG for an accidental glyph, sized in em so it sits in running text. */
+function accSvg(a) {
+  const g = GLYPHS[ACC_GLYPH[a]];
+  const y0 = -g.b[3], h = g.b[3] - g.b[1];
+  return `<svg class="acc" viewBox="0 ${y0} ${g.w} ${h}" style="width:${(g.w / h * 1.05).toFixed(2)}em" aria-hidden="true"><path transform="scale(1 -1)" d="${g.d}" fill="currentColor"/></svg>`;
+}
+/** Note name as HTML, e.g. F♯4. withOct=false drops the octave number. */
+function nameHTML(n, withOct = true) {
+  return `<span class="nm">${LETTERS[n.l]}${n.a ? accSvg(n.a) : ''}${withOct ? n.o : ''}</span>`;
+}
+const accHTML = a => `<span class="nm">${accSvg(a)}</span>`;
+
+// ---- Clefs ----------------------------------------------------------------
+// bottom = diatonic step of the bottom line. pos 0 = bottom line, 2 = second line ... 8 = top line.
+const CLEFS = {
+  treble: { bottom: stepOf(parseNote('E4')), title: 'Treble clef' },
+  bass: { bottom: stepOf(parseNote('G2')), title: 'Bass clef' },
+  alto: { bottom: stepOf(parseNote('F3')), title: 'Alto clef' },
+  tenor: { bottom: stepOf(parseNote('D3')), title: 'Tenor clef' },
+};
+const posOf = (n, clef) => stepOf(n) - CLEFS[clef].bottom;
+const noteAtPos = (pos, clef, a = 0) => fromStep(CLEFS[clef].bottom + pos, a);
+
+// ---- Key signatures ---------------------------------------------------------
+const SHARP_ORDER = [3, 0, 4, 1, 5, 2, 6]; // F C G D A E B
+const FLAT_ORDER = [6, 2, 5, 1, 4, 0, 3]; // B E A D G C F
+const KEYS = {
+  0: 'C major', 1: 'G major', 2: 'D major', 3: 'A major', 4: 'E major', 5: 'B major',
+  '-1': 'F major', '-2': 'B♭ major', '-3': 'E♭ major', '-4': 'A♭ major', '-5': 'D♭ major',
+};
+function keyAccs(n) {
+  const m = {};
+  if (n > 0) SHARP_ORDER.slice(0, n).forEach(l => (m[l] = 1));
+  if (n < 0) FLAT_ORDER.slice(0, -n).forEach(l => (m[l] = -1));
+  return m;
+}
+/** A note as written under a key signature. `explicit` (a number) forces an accidental sign. */
+function writtenInKey(l, o, keyN, explicit) {
+  const km = keyAccs(keyN);
+  if (explicit === undefined || explicit === null) return mk(l, o, km[l] || 0, { hide: true });
+  return mk(l, o, explicit, explicit === 0 && (km[l] || 0) !== 0 ? { nat: true } : undefined);
+}
+
+// ---- Landmarks --------------------------------------------------------------
+// The reference set from the grand-staff chart: every C, plus G (treble side) and F (bass side).
+const LANDMARKS = [
+  { n: 'C1', name: 'Very Low C', tags: ['bass'] },
+  { n: 'C2', name: 'Low C', tags: ['bass'] },
+  { n: 'F2', name: 'Low F', tags: ['bass'] },
+  { n: 'C3', name: 'Bass C', tags: ['bass'] },
+  { n: 'F3', name: 'Bass F', core: true, tags: ['bass'] },
+  { n: 'C4', name: 'Middle C', core: true, tags: ['treble', 'bass', 'alto', 'tenor'] },
+  { n: 'G4', name: 'Treble G', core: true, tags: ['treble'] },
+  { n: 'C5', name: 'Treble C', tags: ['treble'] },
+  { n: 'G5', name: 'High G', tags: ['treble'] },
+  { n: 'C6', name: 'High C', tags: ['treble'] },
+  { n: 'C7', name: 'Very High C', tags: ['treble'] },
+].map(l => Object.assign(l, { note: parseNote(l.n), step: stepOf(parseNote(l.n)), midi: midiOf(parseNote(l.n)) }));
+const LM = Object.fromEntries(LANDMARKS.map(l => [l.n, l]));
+
+function landmarkFor(n, clef) {
+  const s = stepOf(n);
+  const cClef = clef === 'alto' || clef === 'tenor';
+  const relevant = l => (cClef ? l.n === 'C4' : l.core || (clef && l.tags.includes(clef)));
+  let best = null;
+  for (const l of LANDMARKS) {
+    if (clef && !relevant(l)) continue;
+    const d = Math.abs(s - l.step);
+    const score = d * 10 + (l.core ? 0 : 1) + (clef && l.tags[0] === clef ? -0.5 : 0);
+    if (!best || score < best.score) best = { l, d, score };
+  }
+  return best.l;
+}
+/** Describe how to reach note n from its nearest landmark. reveal=false hides the letter. */
+function route(n, clef, reveal = true) {
+  const lm = landmarkFor(n, clef);
+  const d = stepOf(n) - lm.step, k = Math.abs(d);
+  const dir = d > 0 ? 'up' : 'down';
+  const fromTxt = `<b>${lm.name}</b> (${LETTERS[lm.note.l]}${lm.note.o})`;
+  let how;
+  if (k === 0) how = `That note <i>is</i> the landmark ${fromTxt}.`;
+  else if (k === 1) how = `One step ${dir} from ${fromTxt}: line to the next space (or space to the next line).`;
+  else if (k === 2) how = `A skip ${dir} from ${fromTxt}: line to line, or space to space (a 3rd).`;
+  else how = `${k} steps ${dir} from ${fromTxt} (a ${INTERVAL_NAMES[k] || k + 1 + 'th'}).`;
+  const letter = LETTERS[n.l];
+  return { lm, d, k, dir, html: how, answerHTML: reveal ? how + ` Count the letters: that gives <b>${letter}</b>.` : how };
+}
+function stepPhrase(k, dir) {
+  if (k === 1) return `one step ${dir}`;
+  if (k === 2) return `a skip ${dir} (a 3rd)`;
+  return `${k} steps ${dir} (a ${INTERVAL_NAMES[k] || (k + 1) + 'th'})`;
+}
+
+// ---- Misc helpers -----------------------------------------------------------
+const rnd = n => Math.floor(Math.random() * n);
+const pick = arr => arr[rnd(arr.length)];
+function weightedPick(items, weightFn) {
+  const ws = items.map(weightFn);
+  let r = Math.random() * ws.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < items.length; i++) { r -= ws[i]; if (r <= 0) return items[i]; }
+  return items[items.length - 1];
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const intervalName = (n1, n2) => INTERVAL_NAMES[clamp(Math.abs(stepOf(n1) - stepOf(n2)), 0, 7)] || (Math.abs(stepOf(n1) - stepOf(n2)) + 1) + 'th';
+
+/* ---- store.js ---- */
+// ---------------------------------------------------------------------------
+// Progress store. Each practised item (a note read in a clef, a key, a key signature...)
+// sits in a Leitner-style box 0..5. Boxes drive both what you see next and the mastery bars.
+// Persists to localStorage when available, otherwise lives in memory for the session.
+// ---------------------------------------------------------------------------
+const Store = (() => {
+  const KEY = 'landmark-piano:v1';
+  const DEFAULTS = {
+    sound: true, volume: 0.8, guides: 'auto', hints: true, keyLabels: 'auto', theme: 'auto', length: 20,
+  };
+  let data = { items: {}, settings: {}, best: {}, days: {}, totals: { q: 0, ok: 0 } };
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) data = Object.assign(data, JSON.parse(raw));
+  } catch (e) { /* storage unavailable: keep in memory */ }
+
+  let timer = null;
+  function save() {
+    clearTimeout(timer);
+    timer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* ignore */ } }, 250);
+  }
+
+  const MASTERED = 3;
+  const get = id => data.items[id] || null;
+  const box = id => (data.items[id] ? data.items[id].b : 0);
+  const seen = id => !!(data.items[id] && data.items[id].n);
+
+  function rec(id, ok, ms, hinted) {
+    const it = data.items[id] || (data.items[id] = { b: 0, n: 0, c: 0, ms: 0, t: 0 });
+    it.n++;
+    if (ok) it.c++;
+    it.ms = it.ms ? Math.round(it.ms * 0.7 + ms * 0.3) : Math.round(ms);
+    it.t = Date.now();
+    if (ok) { if (!hinted && ms < 12000) it.b = Math.min(5, it.b + 1); }
+    else it.b = Math.max(0, it.b - 2);
+    data.totals.q++;
+    if (ok) data.totals.ok++;
+    const day = new Date().toISOString().slice(0, 10);
+    data.days[day] = (data.days[day] || 0) + 1;
+    save();
+  }
+  function weight(id) {
+    const it = data.items[id];
+    if (!it || !it.n) return 3.2;
+    const accPenalty = it.n >= 2 ? (1 - it.c / it.n) * 2 : 0;
+    return 0.5 + (5 - it.b) * 0.9 + accPenalty;
+  }
+  /** Share of the given ids that are mastered (box >= 3). */
+  function mastery(ids) {
+    if (!ids.length) return 0;
+    return ids.filter(id => box(id) >= MASTERED).length / ids.length;
+  }
+  const started = ids => ids.some(seen);
+  function setBest(key, v) { if (v > (data.best[key] || 0)) { data.best[key] = v; save(); return true; } return false; }
+  const best = key => data.best[key] || 0;
+
+  const setting = k => (data.settings[k] === undefined ? DEFAULTS[k] : data.settings[k]);
+  function setSetting(k, v) { data.settings[k] = v; save(); }
+  function reset() { data = { items: {}, settings: data.settings, best: {}, days: {}, totals: { q: 0, ok: 0 } }; save(); }
+  return { get, box, seen, rec, weight, mastery, started, setBest, best, setting, setSetting, reset, MASTERED, all: () => data };
+})();
+
+/* ---- sound.js ---- */
+// ---------------------------------------------------------------------------
+// Sound: a small additive piano-ish synth on Web Audio, plus optional Web MIDI input.
+// ---------------------------------------------------------------------------
+const Sound = (() => {
+  let ctx = null, master = null, enabled = true, volume = 0.8;
+  let voices = 0;
+
+  function ensure() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try {
+        ctx = new AC();
+        const comp = ctx.createDynamicsCompressor();
+        master = ctx.createGain();
+        master.gain.value = volume * 0.5;
+        master.connect(comp);
+        comp.connect(ctx.destination);
+      } catch (e) { ctx = null; return null; }
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  const PARTIALS = [[1, 1, 1], [2, 0.5, 0.7], [3, 0.26, 0.5], [4, 0.14, 0.38], [5, 0.07, 0.3], [6, 0.04, 0.25]];
+  function play(m, o = {}) {
+    if (!enabled) return;
+    const c = ensure();
+    if (!c || voices > 28) return;
+    const t = c.currentTime + (o.delay || 0);
+    const f = 440 * Math.pow(2, (m - 69) / 12);
+    const dur = o.dur || Math.max(0.9, 2.6 - (m - 21) / 45);
+    const vel = (o.vel || 0.7) * 0.55;
+    const out = c.createGain();
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = Math.min(9000, f * 6 + 700);
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(vel, t + 0.005);
+    out.gain.exponentialRampToValueAtTime(vel * 0.4, t + 0.35);
+    out.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    out.connect(lp);
+    lp.connect(master);
+    voices++;
+    PARTIALS.forEach(([mult, amp, decay], i) => {
+      if (f * mult > 12000) return;
+      [0, 1.4].forEach(cents => {
+        if (i > 0 && cents) return;
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = f * mult;
+        osc.detune.value = cents;
+        g.gain.setValueAtTime(amp * (cents ? 0.6 : 1), t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur * decay);
+        osc.connect(g);
+        g.connect(out);
+        osc.start(t);
+        osc.stop(t + dur + 0.05);
+        if (i === 0 && cents) osc.onended = () => { voices--; };
+      });
+    });
+  }
+  function playSeq(ms, gap = 0.28) { ms.forEach((m, i) => play(m, { delay: i * gap, dur: 1.2 })); }
+  function playChord(ms) { ms.forEach(m => play(m, { dur: 1.8, vel: 0.55 })); }
+
+  // --- MIDI input ---
+  let midiAccess = null, midiHandler = null, midiNames = [];
+  async function connectMIDI(onNote) {
+    midiHandler = onNote;
+    if (!navigator.requestMIDIAccess) return { ok: false, msg: 'This browser does not support Web MIDI. Try Chrome or Edge.' };
+    try {
+      midiAccess = midiAccess || await navigator.requestMIDIAccess();
+      const attach = () => {
+        midiNames = [];
+        midiAccess.inputs.forEach(inp => {
+          midiNames.push(inp.name);
+          inp.onmidimessage = e => {
+            const [s, d1, d2] = e.data;
+            if ((s & 0xf0) === 0x90 && d2 > 0 && midiHandler) midiHandler(d1);
+          };
+        });
+      };
+      attach();
+      midiAccess.onstatechange = attach;
+      return midiNames.length
+        ? { ok: true, msg: 'Connected: ' + midiNames.join(', ') }
+        : { ok: true, msg: 'MIDI is on, but no keyboard was found. Plug one in and it will connect.' };
+    } catch (e) {
+      return { ok: false, msg: 'MIDI access was blocked. You can still use the on-screen keys.' };
+    }
+  }
+  const setMidiHandler = fn => { midiHandler = fn; };
+
+  return {
+    play, playSeq, playChord, ensure, connectMIDI, setMidiHandler,
+    get enabled() { return enabled; },
+    set enabled(v) { enabled = v; },
+    setVolume(v) { volume = v; if (master) master.gain.value = v * 0.5; },
+  };
+})();
+
+/* ---- staff.js ---- */
+// ---------------------------------------------------------------------------
+// Staff renderer. Produces an inline SVG string from a description:
+//   clef: 'treble' | 'bass' | 'alto' | 'tenor' | 'grand'
+//   cols: [[item, ...], ...]  each column is one beat; several items in a column form a chord
+//         item = { n: note, clef?, state?, label?, ghost? }
+//   keySig: integer (+sharps / -flats), guides: draw landmark labels, extent: { treble:[lo,hi], ... }
+//   ottava: { text:'8va', side:'above'|'below', from, to }, onPick: click handler for empty rows
+// ---------------------------------------------------------------------------
+const Staff = (() => {
+  const S = 12, H = S / 2, K = S / 250;
+  const CLEF_GLYPH = { treble: ['gClef', 2], bass: ['fClef', 6], alto: ['cClef', 4], tenor: ['cClef', 6] };
+  const KS_POS = {
+    treble: { sharp: [8, 5, 9, 6, 3, 7, 4], flat: [4, 7, 3, 6, 2, 5, 1] },
+    bass: { sharp: [6, 3, 7, 4, 1, 5, 2], flat: [2, 5, 1, 4, 0, 3, -1] },
+  };
+  const f = v => Math.round(v * 10) / 10;
+  const gp = (name, x, y, cls) =>
+    `<path${cls ? ` class="${cls}"` : ''} d="${GLYPHS[name].d}" transform="translate(${f(x)} ${f(y)}) scale(${K} ${-K})"/>`;
+  const gw = name => GLYPHS[name].w * K;
+
+  function render(o) {
+    const grand = o.clef === 'grand';
+    const staves = grand ? ['treble', 'bass'] : [o.clef];
+    const cols = (o.cols || []).map(col => col.map(it => Object.assign({}, it)));
+    const ks = o.keySig || 0;
+    const ext = {};
+    staves.forEach(c => (ext[c] = { lo: 0, hi: 8 }));
+
+    // Resolve each item's staff and position; grow the vertical extent to fit.
+    cols.forEach(col => {
+      const chord = col.length > 1;
+      col.forEach(it => {
+        it.clef = it.clef || (grand ? (stepOf(it.n) >= 28 ? 'treble' : 'bass') : o.clef);
+        it.pos = posOf(it.n, it.clef);
+        it.whole = o.whole || chord || it.whole;
+        const e = ext[it.clef];
+        e.lo = Math.min(e.lo, it.pos - 1);
+        e.hi = Math.max(e.hi, it.pos + 1);
+        if (!it.whole) {
+          const up = it.pos < 4;
+          if (up) e.hi = Math.max(e.hi, it.pos + 8); else e.lo = Math.min(e.lo, it.pos - 8);
+        }
+      });
+    });
+    staves.forEach(c => {
+      const x = (o.extent || {})[c];
+      if (x) { ext[c].lo = Math.min(ext[c].lo, x[0]); ext[c].hi = Math.max(ext[c].hi, x[1]); }
+      if (o.onPick) { ext[c].lo = Math.min(ext[c].lo, -4); ext[c].hi = Math.max(ext[c].hi, 12); }
+    });
+
+    // ----- vertical layout -----
+    const ottAbove = o.ottava && o.ottava.side === 'above';
+    const ottBelow = o.ottava && o.ottava.side === 'below';
+    const topPad = 10 + (ottAbove ? 24 : 0);
+    const Y = {}; // per clef: y of bottom line (pos 0)
+    if (grand) {
+      const t = ext.treble, b = ext.bass;
+      const top8 = topPad + Math.max(0, t.hi - 8) * H;
+      Y.treble = top8 + 8 * H;
+      const gap = Math.max(8, Math.max(0, -t.lo) + Math.max(0, b.hi - 8) + 4);
+      Y.bass = Y.treble + gap * H + 8 * H;
+    } else {
+      const c = staves[0];
+      Y[c] = topPad + Math.max(0, ext[c].hi - 8) * H + 8 * H;
+    }
+    const lastC = staves[staves.length - 1];
+    const bottomEdge = Y[lastC] + Math.max(0, -ext[lastC].lo) * H;
+    const labelRow = cols.some(col => col.some(it => it.label));
+    const height = bottomEdge + 10 + (ottBelow ? 24 : 0) + (labelRow ? 18 : 0);
+    const topEdge = Y[staves[0]] - 8 * H;
+    const yOf = (c, pos) => Y[c] - pos * H;
+
+    // ----- horizontal layout -----
+    const x0 = grand ? 34 : 10;
+    let x = x0 + 8;
+    const clefW = Math.max(...staves.map(c => gw(CLEF_GLYPH[c][0])));
+    const clefX = x;
+    x += clefW + 8;
+    const ksX = x;
+    if (ks && KS_POS[staves[0]]) {
+      const g = ks > 0 ? 'sharp' : 'flat';
+      x += Math.abs(ks) * (gw(g) + 3.5);
+    }
+    x += 10;
+    const colStart = x;
+    const nCol = Math.max(1, cols.length);
+    const colW = o.colW || (nCol <= 1 ? 130 : 46);
+    const area = nCol * colW;
+    let x1 = colStart + area + 6;
+    if (x1 < 270) x1 = 270;
+    const guideW = o.guides ? 72 : 10;
+    const width = x1 + guideW;
+    const cxOf = i => colStart + (i + 0.5) * (x1 - 6 - colStart) / nCol;
+
+    let svg = '';
+    // staff lines
+    staves.forEach(c => {
+      for (let i = 0; i < 5; i++) {
+        const y = yOf(c, i * 2);
+        svg += `<line class="ln" x1="${x0}" x2="${x1}" y1="${f(y)}" y2="${f(y)}"/>`;
+      }
+    });
+    // system barline, brace, end barline
+    svg += `<line class="bar" x1="${x0}" x2="${x0}" y1="${f(topEdge)}" y2="${f(Y[lastC])}"/>`;
+    svg += `<line class="bar" x1="${x1}" x2="${x1}" y1="${f(topEdge)}" y2="${f(Y[lastC])}"/>`;
+    if (grand) {
+      const sy = (Y.bass - topEdge) / GLYPHS.brace.b[3];
+      svg += `<path class="brace" d="${GLYPHS.brace.d}" transform="translate(${x0 - 17} ${f(Y.bass)}) scale(${f(14 / GLYPHS.brace.w)} ${-sy.toFixed(4)})"/>`;
+    }
+    // clefs and key signature
+    staves.forEach(c => {
+      const [g, line] = CLEF_GLYPH[c];
+      svg += gp(g, clefX, yOf(c, line), 'clef');
+      if (ks && KS_POS[c]) {
+        const kind = ks > 0 ? 'sharp' : 'flat';
+        const ps = KS_POS[c][kind];
+        let kx = ksX;
+        for (let i = 0; i < Math.abs(ks); i++) {
+          svg += gp(kind, kx, yOf(c, ps[i]), 'ksig');
+          kx += gw(kind) + 3.5;
+        }
+      }
+    });
+
+    // landmark guides
+    if (o.guides) {
+      staves.forEach(c => {
+        LANDMARKS.forEach(l => {
+          if (!l.tags.includes(c)) return;
+          const pos = posOf(l.note, c);
+          if (pos < ext[c].lo + 0.5 || pos > ext[c].hi - 0.5) return;
+          const y = yOf(c, pos);
+          const ledger = pos < 0 || pos > 8;
+          const xa = ledger ? x1 - 36 : x0;
+          svg += `<line class="guide" x1="${xa}" x2="${x1}" y1="${f(y)}" y2="${f(y)}"/>`;
+          svg += `<text class="guide-lbl" x="${x1 + 6}" y="${f(y + 3.5)}">${l.name}</text>`;
+        });
+      });
+    }
+
+    // click targets (under the notes)
+    let hits = '';
+    if (o.onPick) {
+      staves.forEach(c => {
+        for (let p = ext[c].lo; p <= ext[c].hi; p++) {
+          hits += `<rect class="hit" data-clef="${c}" data-pos="${p}" x="${x0}" y="${f(yOf(c, p) - H)}" width="${f(x1 - x0)}" height="${H * 2}"/>`;
+        }
+      });
+    }
+
+    // notes (ledger lines first so heads sit on top)
+    let ledSvg = '', noteSvg = '';
+    const labelY = height - 6;
+    cols.forEach((col, ci) => {
+      const cx = cxOf(ci);
+      const byClef = {};
+      col.forEach(it => (byClef[it.clef] = byClef[it.clef] || []).push(it));
+      Object.keys(byClef).forEach(c => {
+        const items = byClef[c].slice().sort((a, b) => a.pos - b.pos);
+        // displaced seconds
+        items.forEach((it, i) => {
+          const prev = items[i - 1];
+          it.disp = !!(prev && it.pos - prev.pos === 1 && !prev.disp);
+        });
+        // ledger lines (union across the chord)
+        const lo = items[0].pos, hi = items[items.length - 1].pos;
+        const hwMax = Math.max(...items.map(it => gw(it.whole ? 'whole' : 'black')));
+        const anyDisp = items.some(it => it.disp);
+        const lx1 = cx - hwMax / 2 - 4, lx2 = cx + hwMax / 2 + 4 + (anyDisp ? hwMax : 0);
+        let led = '';
+        for (let q = -2; q >= lo; q -= 2) led += `<line class="ledger" x1="${f(lx1)}" x2="${f(lx2)}" y1="${f(yOf(c, q))}" y2="${f(yOf(c, q))}"/>`;
+        for (let q = 10; q <= hi; q += 2) led += `<line class="ledger" x1="${f(lx1)}" x2="${f(lx2)}" y1="${f(yOf(c, q))}" y2="${f(yOf(c, q))}"/>`;
+        // accidental columns (stagger when close vertically)
+        const accItems = items.filter(it => (it.n.a !== 0 && !it.n.hide) || it.n.nat).sort((a, b) => b.pos - a.pos);
+        const accCols = [];
+        accItems.forEach(it => {
+          let k = accCols.findIndex(last => last - it.pos >= 6);
+          if (k < 0) { k = accCols.length; accCols.push(it.pos); } else accCols[k] = it.pos;
+          it.accCol = k;
+        });
+        // draw each note
+        items.forEach(it => {
+          const hn = it.whole ? 'whole' : 'black';
+          const hw = gw(hn);
+          const hx = cx - hwMax / 2 + (it.disp ? hwMax : 0) + (hwMax - hw) / 2;
+          const y = yOf(c, it.pos);
+          let g = '';
+          g += gp(hn, hx, y);
+          if (!it.whole) {
+            const up = it.pos < 4;
+            let end = up ? Math.max(it.pos + 7, 4) : Math.min(it.pos - 7, 4);
+            const sx = up ? hx + hw - 0.7 : hx + 0.7;
+            g += `<line class="stem" x1="${f(sx)}" x2="${f(sx)}" y1="${f(y)}" y2="${f(yOf(c, end))}"/>`;
+          }
+          if (it.accCol !== undefined) {
+            const a = it.n.a !== 0 ? it.n.a : 0;
+            const gname = ACC_GLYPH[a];
+            const aw = gw(gname);
+            const ax = cx - hwMax / 2 - 4 - aw - it.accCol * 14;
+            g += gp(gname, ax, y, 'accg');
+          }
+          const cls = `note st-${it.state || 'ink'}${it.ghost ? ' ghost' : ''}`;
+          noteSvg += `<g class="${cls}">${g}</g>`;
+          if (it.label) noteSvg += `<text class="lbl" x="${f(cx)}" y="${f(labelY)}" text-anchor="middle">${it.label}</text>`;
+        });
+        ledSvg += led;
+      });
+    });
+
+    svg += hits + ledSvg + noteSvg;
+
+    // ottava bracket
+    if (o.ottava) {
+      const ot = o.ottava;
+      const xa = cxOf(ot.from) - 14, xb = cxOf(ot.to) + 16;
+      const y = ottAbove ? topPad - 14 : bottomEdge + 18;
+      const hook = ottAbove ? 7 : -7;
+      svg += `<text class="ott-lbl" x="${f(xa)}" y="${f(y + (ottAbove ? 4 : 4))}">${ot.text}</text>`;
+      svg += `<polyline class="ott" points="${f(xa + 30)},${f(y)} ${f(xb)},${f(y)} ${f(xb)},${f(y + hook)}"/>`;
+    }
+
+    const aria = o.aria || 'Music staff';
+    const html = `<svg class="staff-svg" viewBox="0 0 ${f(width)} ${f(height)}" role="img" aria-label="${aria}" preserveAspectRatio="xMidYMid meet">${svg}</svg>`;
+    return { html, w: width, h: height };
+  }
+
+  function mount(el, o) {
+    const r = render(o);
+    el.innerHTML = `<div class="staff-wrap" style="max-width:${Math.round(r.w * (o.scale || 1.5))}px">${r.html}</div>`;
+    if (o.onPick) {
+      el.querySelector('svg').addEventListener('click', e => {
+        const t = e.target.closest('.hit');
+        if (t) o.onPick(+t.dataset.pos, t.dataset.clef);
+      });
+    }
+    return r;
+  }
+  return { render, mount };
+})();
+
+/* ---- keyboard.js ---- */
+// ---------------------------------------------------------------------------
+// On-screen piano keyboard (SVG). Keys carry data-m = MIDI number.
+//   mount(el, { lo, hi, labels: 'none'|'c'|'landmarks'|'all', groups, onPress, minKey, maxKey })
+// Returns { mark(m, state), clear(), flash(m), scrollTo(m), range }.
+// ---------------------------------------------------------------------------
+const Keyboard = (() => {
+  const WK = 36, KH = 150, BH = 94, BW = 22;
+  const BLACK_OFFSET = { 1: -0.08, 3: 0.08, 6: -0.1, 8: 0, 10: 0.1 };
+  const LM_BY_MIDI = Object.fromEntries(LANDMARKS.map(l => [l.midi, l]));
+
+  function mount(el, o) {
+    let lo = o.lo, hi = o.hi;
+    while (isBlackMidi(lo)) lo--;
+    while (isBlackMidi(hi)) hi++;
+    const whites = [], blacks = [];
+    for (let m = lo; m <= hi; m++) (isBlackMidi(m) ? blacks : whites).push(m);
+    const widx = {};
+    whites.forEach((m, i) => (widx[m] = i));
+    const W = whites.length * WK;
+    const labels = o.labels || 'none';
+    let svg = '';
+    whites.forEach(m => {
+      const pc = ((m % 12) + 12) % 12;
+      const grp = o.groups ? (pc <= 4 ? ' g2' : ' g3') : '';
+      svg += `<rect class="wk${grp}" data-m="${m}" x="${widx[m] * WK}" y="0" width="${WK}" height="${KH}" rx="3"/>`;
+    });
+    // labels and landmark dots
+    whites.forEach(m => {
+      const pc = ((m % 12) + 12) % 12, l = PCS.indexOf(pc), oct = Math.floor(m / 12) - 1;
+      const cx = widx[m] * WK + WK / 2;
+      const lm = LM_BY_MIDI[m];
+      let txt = '';
+      if (labels === 'all') txt = LETTERS[l] + (l === 0 ? oct : '');
+      else if (labels === 'c' && l === 0) txt = 'C' + oct;
+      else if (labels === 'landmarks' && lm) txt = LETTERS[l] + oct;
+      if (labels === 'landmarks' && lm) svg += `<circle class="lm-dot" cx="${cx}" cy="${KH - 38}" r="5"/>`;
+      if (txt) svg += `<text class="kl${lm && labels !== 'all' ? ' lm' : ''}" x="${cx}" y="${KH - 10}" text-anchor="middle" data-m="${m}">${txt}</text>`;
+    });
+    blacks.forEach(m => {
+      const pc = ((m % 12) + 12) % 12;
+      const below = widx[m - 1];
+      const cx = (below + 1) * WK + BLACK_OFFSET[pc] * WK;
+      svg += `<rect class="bk" data-m="${m}" x="${cx - BW / 2}" y="0" width="${BW}" height="${BH}" rx="2.5"/>`;
+    });
+
+    const minKey = o.minKey || 32, maxKey = o.maxKey || 50;
+    el.innerHTML =
+      `<div class="kb-scroll"><div class="kb-inner" style="min-width:${whites.length * minKey}px;max-width:${whites.length * maxKey}px">` +
+      `<svg class="kb-svg" viewBox="0 0 ${W} ${KH}" role="group" aria-label="Piano keyboard">${svg}</svg></div></div>`;
+    const root = el.querySelector('svg');
+    const scroller = el.querySelector('.kb-scroll');
+    const keyEl = {}, lblEl = {};
+    root.querySelectorAll('[data-m]').forEach(k => { if (k.tagName === 'rect') keyEl[k.dataset.m] = k; else lblEl[k.dataset.m] = k; });
+
+    root.addEventListener('pointerdown', e => {
+      const t = e.target.closest('[data-m]');
+      if (!t) return;
+      e.preventDefault();
+      const m = +t.dataset.m;
+      flash(m);
+      if (o.onPress) o.onPress(m);
+    });
+
+    function mark(m, state) {
+      const k = keyEl[m];
+      if (!k) return;
+      const l = lblEl[m];
+      if (state) { k.setAttribute('data-s', state); if (l) l.setAttribute('data-s', state); }
+      else { k.removeAttribute('data-s'); if (l) l.removeAttribute('data-s'); }
+    }
+    function clear() { Object.values(keyEl).forEach(k => k.removeAttribute('data-s')); Object.values(lblEl).forEach(k => k.removeAttribute('data-s')); }
+    function flash(m) {
+      const k = keyEl[m];
+      if (!k) return;
+      k.classList.add('down');
+      setTimeout(() => k.classList.remove('down'), 160);
+    }
+    function scrollTo(m) {
+      const k = keyEl[m];
+      if (!k) return;
+      const inner = el.querySelector('.kb-inner');
+      const frac = (+k.getAttribute('x') + WK / 2) / W;
+      scroller.scrollLeft = frac * inner.scrollWidth - scroller.clientWidth / 2;
+    }
+    function scrollBy(dir) { scroller.scrollBy({ left: dir * scroller.clientWidth * 0.7, behavior: 'smooth' }); }
+    return { mark, clear, flash, scrollTo, scrollBy, range: [lo, hi], el, scroller };
+  }
+  return { mount };
+})();
+
+/* ---- curriculum.js ---- */
+// ---------------------------------------------------------------------------
+// Curriculum: 16 levels in four tiers. Each level declares
+//   staff  - notes to read from the staff  (entry: { clef, n, id, w?, ott? })
+//   keys   - notes to find / name on the keyboard (entry: { n, id })
+//   types  - question types and their relative weights
+//   pad    - what the "name it" pad asks for ({ letter, acc, oct })
+//   steps  - landmark-relative questions ({ from: [landmark names], max })
+//   review - earlier levels to blend back in
+// Lesson slides live in lessons.js.
+// ---------------------------------------------------------------------------
+const E = (clef, n, extra) => Object.assign({ clef, n, id: `${clef}:${ascii(n)}${extra && extra.ott ? '*' : ''}` }, extra);
+const naturals = (clef, lo, hi) => {
+  const out = [];
+  for (let s = stepOf(parseNote(lo)); s <= stepOf(parseNote(hi)); s++) out.push(E(clef, fromStep(s)));
+  return out;
+};
+const list = (clef, arr) => arr.map(s => E(clef, parseNote(s)));
+const blackSpellings = (loM, hiM) => {
+  const out = [];
+  for (let m = loM; m <= hiM; m++) if (isBlackMidi(m)) { out.push(noteFromMidi(m, false)); out.push(noteFromMidi(m, true)); }
+  return out;
+};
+const keyEntry = (n, id) => ({ n, id: id || 'k:' + ascii(n) });
+const keysOf = (arr, idFn) => arr.map(s => { const n = typeof s === 'string' ? parseNote(s) : s; return keyEntry(n, idFn && idFn(n)); });
+const whiteKeys = (lo, hi) => {
+  const out = [];
+  for (let s = stepOf(parseNote(lo)); s <= stepOf(parseNote(hi)); s++) out.push(fromStep(s));
+  return out;
+};
+
+const TIERS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+
+const LEVELS = [
+  // ------------------------------------------------------------- BEGINNER
+  {
+    id: 1, tier: 0, title: 'Keyboard Geography', tag: 'Find any white key using the black-key groups.',
+    keys: whiteKeys('C3', 'B4').map(n => keyEntry(n, 'pc:' + LETTERS[n.l])), anyOctave: true,
+    types: { locate: 3, identify: 3 }, pad: { letter: true }, kb: ['C3', 'B4'],
+  },
+  {
+    id: 2, tier: 0, title: 'Middle C and the Octave Cs', tag: 'Every C is a landmark, numbered by octave.',
+    keys: keysOf(['C2', 'C3', 'C4', 'C5', 'C6']),
+    types: { locate: 3, identify: 3 }, pad: { fixedLetter: 'C', oct: true }, kb: ['C2', 'C6'],
+  },
+  {
+    id: 3, tier: 0, title: 'Three Core Landmarks', tag: 'Middle C, Treble G and Bass F on the staff.',
+    staff: [E('treble', parseNote('G4')), E('bass', parseNote('F3')), E('treble', parseNote('C4')), E('bass', parseNote('C4'))],
+    types: { read: 4, readName: 1, place: 2 }, pad: { letter: true }, kb: ['C3', 'C5'],
+  },
+  {
+    id: 4, tier: 0, title: 'Steps: The Neighbors', tag: 'One step away from a landmark: line to space.',
+    staff: [...list('treble', ['B3', 'D4', 'F4', 'A4']), ...list('bass', ['E3', 'G3'])],
+    steps: { from: ['C4', 'G4', 'F3'], max: 1 }, review: [3],
+    types: { read: 4, steps: 3, readName: 1, place: 1 }, pad: { letter: true }, kb: ['C3', 'C5'],
+  },
+  {
+    id: 5, tier: 0, title: 'Skips: Thirds', tag: 'Two steps away: line to line, space to space.',
+    staff: [...list('treble', ['E4', 'B4']), ...list('bass', ['D3', 'A3'])],
+    steps: { from: ['C4', 'G4', 'F3'], max: 2 }, review: [4],
+    types: { read: 4, steps: 3, readName: 1, place: 1 }, pad: { letter: true }, kb: ['C3', 'C5'],
+  },
+  // --------------------------------------------------------- INTERMEDIATE
+  {
+    id: 6, tier: 1, title: 'Treble Clef Complete', tag: 'Every line and space, anchored on G and C.',
+    staff: naturals('treble', 'D4', 'G5'),
+    steps: { from: ['C4', 'G4', 'C5'], max: 3 }, review: [4, 5],
+    types: { read: 4, readName: 2, place: 2, steps: 2 }, pad: { letter: true }, kb: ['C4', 'C6'],
+  },
+  {
+    id: 7, tier: 1, title: 'Bass Clef Complete', tag: 'Every line and space, anchored on F and C.',
+    staff: naturals('bass', 'F2', 'B3'),
+    steps: { from: ['C3', 'F3', 'C4'], max: 3 }, review: [4, 5],
+    types: { read: 4, readName: 2, place: 2, steps: 2 }, pad: { letter: true }, kb: ['C2', 'C4'],
+  },
+  {
+    id: 8, tier: 1, title: 'The Grand Staff', tag: 'Both hands: switch clefs and keep your landmarks.',
+    staff: [...naturals('treble', 'D4', 'G5'), ...naturals('bass', 'F2', 'B3'), E('treble', parseNote('C4')), E('bass', parseNote('C4'))],
+    steps: { from: ['C3', 'F3', 'C4', 'G4', 'C5', 'G5'], max: 3 }, review: [6, 7],
+    types: { read: 5, readName: 1, place: 1, steps: 2 }, pad: { letter: true }, kb: ['C2', 'C6'],
+  },
+  {
+    id: 9, tier: 1, title: 'Ledger Lines', tag: 'Reach beyond the staff from High C and Low C.',
+    staff: [
+      ...list('treble', ['A3', 'B3', 'C4', 'D4', 'G5', 'A5', 'B5', 'C6', 'D6']),
+      ...list('bass', ['C2', 'D2', 'E2', 'F2', 'B3', 'C4', 'D4', 'E4']),
+    ],
+    steps: { from: ['C2', 'F2', 'C4', 'G5', 'C6'], max: 3 }, review: [8],
+    types: { read: 5, readName: 2, steps: 2, place: 1 }, pad: { letter: true, oct: true }, kb: ['C2', 'C7'],
+  },
+  // ------------------------------------------------------------- ADVANCED
+  {
+    id: 10, tier: 2, title: 'Sharps and Flats', tag: 'Black keys: one key right is sharp, one key left is flat.',
+    staff: [
+      ...blackSpellings(64, 76).map(n => E('treble', n)),
+      ...blackSpellings(43, 55).map(n => E('bass', n)),
+    ],
+    keys: blackSpellings(60, 71).map(n => keyEntry(n)), anySpelling: true,
+    review: [8],
+    types: { read: 4, readName: 2, locate: 2, identify: 2 }, pad: { letter: true, acc: [-1, 0, 1] }, kb: ['C2', 'C6'],
+  },
+  {
+    id: 11, tier: 2, title: 'Key Signatures', tag: 'Read the signature first, then every note.',
+    keySigs: [1, 2, 3, 4, -1, -2, -3, -4],
+    staffClefs: ['treble', 'bass'],
+    types: { readKey: 5, readKeyName: 2 }, pad: { letter: true, acc: [-1, 0, 1] }, kb: ['C2', 'C6'],
+  },
+  {
+    id: 12, tier: 2, title: 'Far Ledger Lines and 8va', tag: 'The top and bottom of the keyboard.',
+    staff: [
+      ...list('treble', ['D6', 'E6', 'F6', 'G6', 'A6']),
+      ...list('bass', ['E1', 'F1', 'G1', 'A1', 'B1']),
+      ...[['C7', 'C6'], ['D7', 'D6'], ['E7', 'E6'], ['F7', 'F6'], ['G7', 'G6']].map(([s, w]) => E('treble', parseNote(s), { w: parseNote(w), ott: '8va' })),
+      ...[['A0', 'A1'], ['B0', 'B1'], ['C1', 'C2'], ['D1', 'D2'], ['E1', 'E2']].map(([s, w]) => E('bass', parseNote(s), { w: parseNote(w), ott: '8vb' })),
+    ],
+    steps: { from: ['C1', 'C6', 'C7'], max: 3 }, review: [9],
+    types: { read: 6, readName: 2, steps: 2 }, pad: { letter: true, oct: true }, kb: ['A0', 'C8'], single: true,
+  },
+  // --------------------------------------------------------------- EXPERT
+  {
+    id: 13, tier: 3, title: 'Enharmonic Spellings', tag: 'E♯, C♭ and double accidentals.',
+    staff: [
+      ...list('treble', ['E#4', 'Fb4', 'B#4', 'Cb5', 'Fx4', 'Gbb4', 'Cx5', 'Dbb5', 'Ax4', 'Bbb4', 'E#5']),
+      ...list('bass', ['E#3', 'Fb3', 'B#2', 'Cb3', 'Fx3', 'Gbb3', 'Cx3', 'Dbb3', 'Ax2', 'Bbb2']),
+    ],
+    keys: keysOf(['E#4', 'Fb4', 'B#4', 'Cb5', 'Fx4', 'Gbb4', 'Cx5', 'Dbb5']),
+    review: [10],
+    types: { read: 4, readName: 3, locate: 2 }, pad: { letter: true, acc: [-2, -1, 0, 1, 2] }, kb: ['C2', 'C6'],
+  },
+  {
+    id: 14, tier: 3, title: 'Alto and Tenor Clefs', tag: 'C clefs: the clef itself points to Middle C.',
+    staff: [...naturals('alto', 'D3', 'B4'), ...naturals('tenor', 'A2', 'G4')],
+    types: { read: 4, readName: 3, place: 1 }, pad: { letter: true, oct: true }, kb: ['C2', 'C6'],
+  },
+  {
+    id: 15, tier: 3, title: 'Intervals and Chords', tag: 'Read stacked notes as shapes, not as names.',
+    shapes: ['root', '1st', '2nd'],
+    types: { interval: 4, chord: 4 }, kb: ['C2', 'C6'], clefs: ['treble', 'bass'],
+  },
+  {
+    id: 16, tier: 3, title: 'Sight-Reading Gauntlet', tag: 'Melodies in both clefs, with key signatures.',
+    capstone: [6, 7, 8, 9, 10, 11],
+    seqKeys: [0, 0, 1, 2, -1, -2, -3, 3],
+    types: { seq: 6, readKey: 2, chord: 1, interval: 1 }, pad: { letter: true, acc: [-1, 0, 1] }, kb: ['C2', 'C7'], clefs: ['treble', 'bass'],
+  },
+];
+
+// ---- derived data ------------------------------------------------------------
+const LEVEL = Object.fromEntries(LEVELS.map(l => [l.id, l]));
+
+function levelClefs(L) {
+  if (L.clefs) return L.clefs;
+  const s = new Set((L.staff || []).map(e => e.clef));
+  if (L.keySigs) L.staffClefs.forEach(c => s.add(c));
+  return s.size ? [...s] : ['treble'];
+}
+/** Staff entries including those blended in from review levels (deduplicated). */
+function levelStaff(L, withReview = true) {
+  const out = new Map();
+  (L.staff || []).forEach(e => out.set(e.id, e));
+  if (withReview) (L.review || []).forEach(r => levelStaff(LEVEL[r], true).forEach(e => { if (!out.has(e.id)) out.set(e.id, Object.assign({ review: true }, e)); }));
+  if (L.capstone) L.capstone.forEach(r => levelStaff(LEVEL[r], false).forEach(e => { if (!out.has(e.id)) out.set(e.id, Object.assign({ review: true }, e)); }));
+  return [...out.values()];
+}
+function levelPoolIds(L) {
+  const ids = new Set();
+  (L.staff || []).forEach(e => ids.add(e.id));
+  (L.keys || []).forEach(e => ids.add(e.id));
+  if (L.keySigs) L.keySigs.forEach(k => L.staffClefs.forEach(c => ids.add(`ks:${k}:${c}`)));
+  if (L.shapes) {
+    ['2nd', '3rd', '4th', '5th', '6th', '7th', 'octave'].forEach(i => ids.add('int:' + i));
+    L.shapes.forEach(s => levelClefs(L).forEach(c => ids.add(`ch:${s}:${c}`)));
+  }
+  return [...ids];
+}
+function levelMastery(L) {
+  if (L.capstone) {
+    const ms = L.capstone.map(i => levelMastery(LEVEL[i]));
+    return ms.reduce((a, b) => a + b, 0) / ms.length;
+  }
+  return Store.mastery(levelPoolIds(L));
+}
+const levelStarted = L => (L.capstone ? L.capstone.some(i => levelStarted(LEVEL[i])) : Store.started(levelPoolIds(L)));
+const starsFor = m => (m >= 0.85 ? 3 : m >= 0.6 ? 2 : m >= 0.3 ? 1 : 0);
+
+/** Keyboard range (MIDI) that contains every answer the level can ask for. */
+function levelKbRange(L) {
+  let lo = midiOf(parseNote(L.kb[0])), hi = midiOf(parseNote(L.kb[1]));
+  const widen = n => { lo = Math.min(lo, n); hi = Math.max(hi, n); };
+  levelStaff(L).forEach(e => widen(midiOf(e.n)));
+  (L.keys || []).forEach(e => widen(midiOf(e.n)));
+  if (L.steps) L.steps.from.forEach(n => { const lm = LM[n]; widen(lm.midi - L.steps.max * 2 - 2); widen(lm.midi + L.steps.max * 2 + 2); });
+  return [lo, hi];
+}
+/** Stable vertical extents per clef so the staff doesn't jump around between questions. */
+function levelExtent(L) {
+  const ext = {};
+  levelStaff(L).forEach(e => {
+    const n = e.w || e.n;
+    const p = posOf(n, e.clef);
+    const x = ext[e.clef] || (ext[e.clef] = [0, 8]);
+    x[0] = Math.min(x[0], p - 1); x[1] = Math.max(x[1], p + 1);
+  });
+  if (L.steps) {
+    L.steps.from.forEach(nm => {
+      const lm = LM[nm];
+      levelClefs(L).forEach(c => {
+        if (!lm.tags.includes(c)) return;
+        const p = posOf(lm.note, c);
+        if (!ext[c]) ext[c] = [0, 8];
+        if (p >= -6 && p <= 14) { ext[c][0] = Math.min(ext[c][0], p - 1); ext[c][1] = Math.max(ext[c][1], p + 1); }
+      });
+    });
+  }
+  return ext;
+}
+
+/* ---- lessons.js ---- */
+// ---------------------------------------------------------------------------
+// Lesson slides. viz.staff.notes shorthand:  'G4@treble!lm|Treble G'
+//   note, @clef (grand staff only), !state (lm | target | good | dim), |label.  An inner array is a chord.
+// viz.kb.marks: { C4: 'lm', G4: 'target' }
+// ---------------------------------------------------------------------------
+const LESSONS = {
+  1: [
+    { h: 'Start with the black keys',
+      p: `<p>The black keys come in <b>groups of two</b> and <b>groups of three</b>, repeating all the way up the piano. You never need to count keys from the end. Spot a group and you know where you are.</p><p>Blue keys sit around the pairs, amber keys around the triples.</p>`,
+      viz: { kb: { lo: 'C3', hi: 'B4', groups: true } } },
+    { h: 'Name the white keys from the groups',
+      p: `<ul><li><b>C</b> sits just left of a pair.</li><li><b>D</b> sits between the two black keys of the pair.</li><li><b>E</b> sits just right of the pair.</li><li><b>F</b> sits just left of a triple.</li><li><b>G</b> and <b>A</b> sit under the first and second gaps of the triple.</li><li><b>B</b> sits just right of the triple.</li></ul>`,
+      viz: { kb: { lo: 'C3', hi: 'B4', groups: true, labels: 'all' } } },
+    { h: 'Seven letters, then repeat',
+      p: `<p>Music uses only A B C D E F G. After G the alphabet starts over at A. Moving right is higher in pitch, moving left is lower.</p><p>Practice: find every C, then every F, without counting. The groups do the work.</p>`,
+      viz: { kb: { lo: 'C3', hi: 'B4', labels: 'all', marks: { C3: 'lm', C4: 'lm', F3: 'target', F4: 'target' } } } },
+  ],
+  2: [
+    { h: 'Every C starts an octave',
+      p: `<p>The C just left of each pair of black keys is a landmark. From one C to the next is an <b>octave</b>: same letter name, higher sound. Each C carries a number that goes up as you move right: C2, C3, C4, C5.</p>`,
+      viz: { kb: { lo: 'C2', hi: 'C6', labels: 'c', marks: { C2: 'lm', C3: 'lm', C4: 'lm', C5: 'lm', C6: 'lm' } } } },
+    { h: 'Middle C is C4',
+      p: `<p>Middle C is the C nearest the centre of the keyboard. On a full 88-key piano it is the fourth C from the left. Piano makers' name plates usually sit just above it.</p><p>The Cs you will use most: <b>C2</b> low, <b>C3</b> bass, <b>C4</b> middle, <b>C5</b> treble, <b>C6</b> high.</p>`,
+      viz: { kb: { lo: 'C3', hi: 'C5', labels: 'c', marks: { C4: 'target' } } } },
+    { h: 'Use a C to find anything',
+      p: `<p>To name a key, find the C below it and count letters upward. The key two white keys right of C4 is E4. The white key just left of C4 is B3, because the number only changes at C.</p>`,
+      viz: { kb: { lo: 'A3', hi: 'E5', labels: 'all', marks: { C4: 'lm', E4: 'target', B3: 'target' } } } },
+  ],
+  3: [
+    { h: 'Middle C is the shared note',
+      p: `<p>The treble and bass staves are two halves of one big staff. Middle C sits between them on its own short line, called a <b>ledger line</b>. Written under the treble staff or above the bass staff, it is the same key.</p>`,
+      viz: { staff: { clef: 'grand', guides: true, notes: ['C4@treble!lm|C4', 'C4@bass!lm|C4'] }, kb: { lo: 'C3', hi: 'C5', labels: 'c', marks: { C4: 'lm' } } } },
+    { h: 'Treble G: the curl of the clef',
+      p: `<p>The treble clef spirals around the <b>second line</b>. That line is G, the G above Middle C. Another name for the treble clef is the G clef.</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['G4!lm|G4'] }, kb: { lo: 'C4', hi: 'C5', labels: 'c', marks: { G4: 'lm' } } } },
+    { h: 'Bass F: the dots of the clef',
+      p: `<p>The two dots of the bass clef hug the <b>fourth line</b>. That line is F, the F below Middle C. This is the F clef.</p>`,
+      viz: { staff: { clef: 'bass', guides: true, notes: ['F3!lm|F3'] }, kb: { lo: 'C3', hi: 'C4', labels: 'c', marks: { F3: 'lm' } } } },
+    { h: 'Why landmarks beat memorizing',
+      p: `<p>Memorizing 20 lines and spaces is slow. With landmarks you find the nearest one and count a step or two. Three landmarks cover the middle of the piano. Later you add more Cs, Gs and Fs for the edges.</p>`,
+      viz: { staff: { clef: 'grand', guides: true, notes: ['F3@bass!lm|F', 'C4@treble!lm|C', 'G4@treble!lm|G'] }, kb: { lo: 'C3', hi: 'C5', labels: 'landmarks' } } },
+  ],
+  4: [
+    { h: 'A step is the very next letter',
+      p: `<p>A <b>step</b> moves from a line to the next space, or from a space to the next line. Up the staff is up the alphabet: G, then A. Down the staff goes backwards: G, then F.</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['F4!target|F', 'G4!lm|G', 'A4!target|A'] }, kb: { lo: 'C4', hi: 'C5', labels: 'all', marks: { G4: 'lm', F4: 'target', A4: 'target' } } } },
+    { h: 'Neighbors of the three landmarks',
+      p: `<p>Learn the notes one step from each landmark first:</p><ul><li>Around <b>Middle C</b>: B below, D above.</li><li>Around <b>Treble G</b>: F below, A above.</li><li>Around <b>Bass F</b>: E below, G above.</li></ul>`,
+      viz: { staff: { clef: 'grand', guides: true, notes: ['E3@bass!target|E', 'F3@bass!lm|F', 'G3@bass!target|G', 'B3@treble!target|B', 'C4@treble!lm|C', 'D4@treble!target|D', 'F4@treble!target|F', 'G4@treble!lm|G', 'A4@treble!target|A'] } } },
+  ],
+  5: [
+    { h: 'A skip jumps over one note',
+      p: `<p>Two steps is a <b>skip</b>, also called a 3rd. A skip goes line to line or space to space. From Treble G (a line), a skip up lands on B (the middle line), and a skip down lands on E (the bottom line).</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['E4!target|E', 'G4!lm|G', 'B4!target|B'] }, kb: { lo: 'C4', hi: 'C5', labels: 'all', marks: { G4: 'lm', E4: 'target', B4: 'target' } } } },
+    { h: 'Count from the nearest landmark',
+      p: `<p>To read a note in the bass staff, find the nearest landmark and count. D on the middle line is two steps below Bass F, so it is a skip down: F, E, D.</p>`,
+      viz: { staff: { clef: 'bass', guides: true, notes: ['D3!target|D', 'F3!lm|F', 'A3!target|A'] }, kb: { lo: 'C3', hi: 'C4', labels: 'all', marks: { F3: 'lm', D3: 'target', A3: 'target' } } } },
+  ],
+  6: [
+    { h: 'Two anchors: Treble G and Treble C',
+      p: `<p>Treble G is the second line. Treble C (C5) is the third space. Almost every note in the treble staff is within two steps of one of them, or of Middle C.</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['C4!lm|C', 'G4!lm|G', 'C5!lm|C'] }, kb: { lo: 'C4', hi: 'C6', labels: 'landmarks' } } },
+    { h: 'Reach every note in the staff',
+      p: `<ul><li>From <b>Treble G</b>: F and A are one step away. E (bottom line) and B (middle line) are a skip away.</li><li>From <b>Treble C</b>: B and D are one step away. A and E are a skip away. F (top line) is three steps up.</li></ul><p>Always pick the landmark with the smallest count.</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['E4|E', 'F4|F', 'G4!lm|G', 'A4|A', 'B4|B', 'C5!lm|C', 'D5|D', 'E5|E', 'F5|F'] } } },
+    { h: 'Mnemonics as a backup',
+      p: `<p>The lines from the bottom spell <b>E G B D F</b> (Every Good Boy Does Fine). The spaces spell <b>F A C E</b>. They work, but landmark counting is faster once it clicks.</p>`,
+      viz: { staff: { clef: 'treble', notes: ['E4|E', 'G4|G', 'B4|B', 'D5|D', 'F5|F'] } } },
+  ],
+  7: [
+    { h: 'Two anchors: Bass F and Bass C',
+      p: `<p>Bass F is the fourth line, between the clef's dots. Bass C (C3) is the second space. Middle C hangs one ledger line above the staff.</p>`,
+      viz: { staff: { clef: 'bass', guides: true, notes: ['C3!lm|C', 'F3!lm|F', 'C4!lm|C'] }, kb: { lo: 'C3', hi: 'C4', labels: 'landmarks' } } },
+    { h: 'Reach every note in the staff',
+      p: `<ul><li>From <b>Bass F</b>: E and G are one step away. D (middle line) and A (top line) are a skip away.</li><li>From <b>Bass C</b>: B and D are one step away. A (first space) and E are a skip away. G (bottom line) is three steps down.</li></ul><p>Always pick the landmark with the smallest count.</p>`,
+      viz: { staff: { clef: 'bass', guides: true, notes: ['G2|G', 'A2|A', 'B2|B', 'C3!lm|C', 'D3|D', 'E3|E', 'F3!lm|F', 'G3|G', 'A3|A'] } } },
+    { h: 'Mnemonics as a backup',
+      p: `<p>Lines from the bottom: <b>G B D F A</b> (Good Boys Do Fine Always). Spaces: <b>A C E G</b> (All Cows Eat Grass).</p>`,
+      viz: { staff: { clef: 'bass', notes: ['G2|G', 'B2|B', 'D3|D', 'F3|F', 'A3|A'] } } },
+  ],
+  8: [
+    { h: 'The Cs and Gs and Fs as signposts',
+      p: `<p>Here is the full landmark set: Low C, Low F, Bass C, Bass F, Middle C, Treble G, Treble C, High G and High C. Notice they are all Cs, plus G on the treble side and F on the bass side.</p>`,
+      viz: { staff: { clef: 'grand', guides: true, notes: ['C2@bass!lm|C2', 'F2@bass!lm|F2', 'C3@bass!lm|C3', 'F3@bass!lm|F3', 'C4@treble!lm|C4', 'G4@treble!lm|G4', 'C5@treble!lm|C5', 'G5@treble!lm|G5'] } } },
+    { h: 'Same spot, different clef',
+      p: `<p>A note in the same place on the bass staff is <b>two letters later</b> than on the treble staff. The bottom line is E in treble and G in bass. The top line is F in treble and A in bass. Always check the clef before you name a note.</p>`,
+      viz: { staff: { clef: 'grand', notes: ['E4@treble|E', 'F5@treble|F', 'G2@bass|G', 'A3@bass|A'] } } },
+    { h: 'Middle C is the bridge',
+      p: `<p>When a melody crosses from one hand to the other, it passes through Middle C. Write it either way: one ledger line under the treble staff or one above the bass staff.</p>`,
+      viz: { staff: { clef: 'grand', notes: ['E4@treble|E', 'D4@treble|D', 'C4@treble!lm|C', 'B3@bass|B', 'A3@bass|A'] } } },
+  ],
+  9: [
+    { h: 'Ledger lines extend the staff',
+      p: `<p>Short extra lines carry the staff past its edges. High C is on the <b>second ledger line above</b> the treble staff. Low C is on the <b>second ledger line below</b> the bass staff.</p>`,
+      viz: { staff: { clef: 'grand', guides: true, notes: ['C2@bass!lm|C2', 'F2@bass!lm|F2', 'C4@treble!lm|C4', 'G5@treble!lm|G5', 'C6@treble!lm|C6'] } } },
+    { h: 'Count from the nearest landmark, not the staff',
+      p: `<p>Do not count ledger lines up from the top line. Find High C and count from it. D6 is one step above High C. A5 is a skip below it. For the bass, count from Low C and Low F.</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['A5|A', 'B5|B', 'C6!lm|C', 'D6|D'] } } },
+    { h: 'Octave names matter now',
+      p: `<p>With ledger lines you range over the whole keyboard, so a name like <b>C6</b> carries the octave. Reading this level, the answer pad also asks for the octave number.</p>` },
+  ],
+  10: [
+    { h: 'Sharp is right, flat is left',
+      p: `<p>A <b>sharp</b> (♯) means move to the very next key on the right, black or white. A <b>flat</b> (♭) means the very next key on the left. F♯ is the black key right of F. G♭ is the black key left of G. Same key, two names.</p>`,
+      viz: { staff: { clef: 'treble', notes: ['F4|F', 'F#4!target|F♯', 'Gb4!target|G♭', 'G4|G'] }, kb: { lo: 'C4', hi: 'C5', labels: 'all', marks: { 'F#4': 'target' } } } },
+    { h: 'Where the symbol sits',
+      p: `<p>The accidental is written <b>left</b> of the note head on the same line or space. It stays in force for the rest of that measure. A natural sign (♮) cancels it.</p>`,
+      viz: { staff: { clef: 'treble', notes: ['B4|B', 'Bb4|B♭', 'B4n|B♮'] } } },
+    { h: 'Where black keys are missing',
+      p: `<p>There is no black key between B and C, or between E and F. A sharp or flat can therefore land on a white key: E♯ is the F key and C♭ is the B key. You will meet those spellings in Level 13.</p>` },
+  ],
+  11: [
+    { h: 'One signature covers the whole piece',
+      p: `<p>Sharps or flats written at the start of each staff change every note of that letter, in every octave. Here F is sharp, so the F on the top line is F♯, and so is the F in the bottom space.</p>`,
+      viz: { staff: { clef: 'treble', keySig: 1, notes: ['F4@treble|F♯', 'G4|G', 'F5|F♯'] } } },
+    { h: 'The order never changes',
+      p: `<p>Sharps always appear in the order <b>F C G D A E B</b> (Father Charles Goes Down And Ends Battle). Flats go in the reverse: <b>B E A D G C F</b>. So three sharps are always F♯ C♯ G♯.</p>`,
+      viz: { staff: { clef: 'treble', keySig: 3, notes: [] }, kb: { lo: 'C4', hi: 'B4', labels: 'all' } } },
+    { h: 'A quick routine',
+      p: `<p>Before you play: say the altered letters out loud, then read the line. In B♭ major (two flats) you say "B flat, E flat". Every B and E you meet is lowered a half step, in every octave.</p>`,
+      viz: { staff: { clef: 'bass', keySig: -2, notes: ['B2|B♭', 'E3|E♭', 'F3|F'] } } },
+  ],
+  12: [
+    { h: 'Far ledger lines: count from the landmark',
+      p: `<p>Past High C the ledger lines pile up quickly. Do not count lines. Find High C (C6) and count steps: E6 is two steps up, A6 is five steps up. In the bass, count from Low C or Very Low C.</p>`,
+      viz: { staff: { clef: 'treble', guides: true, notes: ['C6!lm|C6', 'E6|E6', 'G6|G6', 'A6|A6'] } } },
+    { h: '8va means "an octave higher"',
+      p: `<p>The text <b>8va</b> with a line over notes tells you to play them <b>one octave higher</b> than written. <b>8vb</b> under notes means one octave lower. It saves reading six ledger lines. Labels here show the sounding note.</p>`,
+      viz: { staff: { clef: 'treble', ottava: { text: '8va', side: 'above', from: 0, to: 2 }, notes: ['C6|C7', 'E6|E7', 'G6|G7'] } } },
+    { h: 'The whole keyboard',
+      p: `<p>This level uses all 88 keys, from A0 at the far left to C8 at the far right. Use the arrows beside the keyboard to scroll. The Cs are still your landmarks: C1, C2 ... C7, C8.</p>`,
+      viz: { kb: { lo: 'A0', hi: 'C8', labels: 'c' } } },
+  ],
+  13: [
+    { h: 'Same key, different spelling',
+      p: `<p>E♯ sounds the same as F. C♭ sounds the same as B. The spelling is chosen by the key and the harmony. When you read E♯, name it E♯ and play the F key.</p>`,
+      viz: { staff: { clef: 'treble', notes: ['E#4!target|E♯', 'F4|F', 'Cb5!target|C♭', 'B4|B'] }, kb: { lo: 'B3', hi: 'C5', labels: 'all', marks: { F4: 'target', B4: 'target' } } } },
+    { h: 'Double sharps and double flats',
+      p: `<p>A double sharp (written like a small x) raises a note two half steps. A double flat (two flats side by side) lowers it two half steps. F double sharp sounds like G. B double flat sounds like A.</p>`,
+      viz: { staff: { clef: 'treble', notes: ['Fx4!target|F𝄪', 'G4|G', 'Bbb4!target|B𝄫', 'A4|A'] } } },
+    { h: 'Read the symbol, then find the key',
+      p: `<p>Two steps: (1) name the written letter, (2) move one or two keys for each accidental. F𝄪: start on F, go two keys right: G.</p>` },
+  ],
+  14: [
+    { h: 'C clefs point at Middle C',
+      p: `<p>The C clef is shaped like a bracket with a pinch in the middle. The pinch sits on the line that is <b>Middle C</b>. In the <b>alto clef</b> that is the middle line. Treat the pinch as your landmark.</p>`,
+      viz: { staff: { clef: 'alto', guides: true, notes: ['C4!lm|C', 'E4|E', 'G4|G'] } } },
+    { h: 'Tenor clef: Middle C on the fourth line',
+      p: `<p>In the <b>tenor clef</b> the pinch sits on the fourth line from the bottom. Same landmark, different place. Count steps from it just like before.</p>`,
+      viz: { staff: { clef: 'tenor', guides: true, notes: ['A3|A', 'C4!lm|C', 'E4|E'] } } },
+    { h: 'Who uses these clefs',
+      p: `<p>Violas read alto clef. Cello, bassoon and trombone switch to tenor clef for high passages. Piano music rarely uses them, but they appear in scores and are a great test of landmark reading.</p>` },
+  ],
+  15: [
+    { h: 'Read intervals by shape',
+      p: `<p>Two notes on adjacent positions (line and space) are a <b>2nd</b>. Line to line or space to space is a <b>3rd</b>. Then 4th, 5th, 6th, 7th. An <b>octave</b> is line to line or space to space with three notes between. Count the positions, including both ends.</p>`,
+      viz: { staff: { clef: 'treble', notes: [['E4', 'G4'], ['E4', 'A4'], ['E4', 'B4'], ['E4', 'E5']] } } },
+    { h: 'Triads stack in thirds',
+      p: `<p>A triad in root position is three notes on three lines or three spaces. If you see three lines stacked with no gaps, the bottom note is the root.</p>`,
+      viz: { staff: { clef: 'treble', notes: [['C4', 'E4', 'G4'], ['G4', 'B4', 'D5'], ['F4', 'A4', 'C5']] } } },
+    { h: 'Inversions: find the gap',
+      p: `<p>When a chord is inverted one gap becomes bigger (a 4th). The <b>upper note of that gap is the root</b>. First inversion: root on top. Second inversion: root in the middle.</p>`,
+      viz: { staff: { clef: 'treble', notes: [['E4', 'G4', 'C5'], ['G4', 'C5', 'E5']] } } },
+  ],
+  16: [
+    { h: 'Read shapes, not names',
+      p: `<p>In real music you read direction (up or down), distance (step, skip, or leap) and landmarks. Name individual notes only when you have to. This level mixes everything you have learned.</p>` },
+    { h: 'Keep your eyes ahead',
+      p: `<p>Read the key signature first, find a landmark in the first bar, then look one beat ahead of your hands. When you slip, keep going: the aim is steady reading, not perfection.</p>` },
+  ],
+};
+
+/* ---- questions.js ---- */
+// ---------------------------------------------------------------------------
+// Question generators. make(level, typeFilter) returns a question:
+//   { type, ids[], text, staff?, kbPrompt?, answer, hint, explain(), shown, level }
+// answer.kind: key | name | place | interval | chord | seq
+// ---------------------------------------------------------------------------
+const TYPE_LABELS = {
+  read: 'Read and play', readName: 'Name the note', locate: 'Find the key', identify: 'Name the key',
+  place: 'Place on the staff', steps: 'Landmark steps', seq: 'Sight-reading lines', chord: 'Chords',
+  interval: 'Intervals', readKey: 'Key signatures', readKeyName: 'Key signatures: name it',
+};
+
+const Questions = (() => {
+  const ctxCache = {};
+  function ctxFor(L) {
+    if (ctxCache[L.id]) return ctxCache[L.id];
+    const clefs = levelClefs(L);
+    const staff = levelStaff(L);
+    const c = {
+      L, clefs, staff, keys: L.keys || [],
+      grand: clefs.includes('treble') && clefs.includes('bass') && !L.single,
+      kb: levelKbRange(L), extent: levelExtent(L), recent: [],
+    };
+    ctxCache[L.id] = c;
+    return c;
+  }
+
+  const wpick = (pool, c) => {
+    const cand = pool.length > 4 ? pool.filter(e => !c.recent.includes(e.id)) : pool;
+    const e = weightedPick(cand.length ? cand : pool, x => Store.weight(x.id) * (x.review ? 0.35 : 1));
+    c.recent.push(e.id);
+    if (c.recent.length > 3) c.recent.shift();
+    return e;
+  };
+
+  function staffOpts(c, clefMode, cols, extra) {
+    const clefs = clefMode === 'grand' ? ['treble', 'bass'] : [clefMode];
+    const extent = {};
+    clefs.forEach(k => { if (c.extent[k]) extent[k] = c.extent[k].slice(); });
+    return Object.assign({ clef: clefMode, cols, extent }, extra);
+  }
+  const NAME = n => nameHTML(n);
+
+  // ---- read / readName ----------------------------------------------------------
+  function readBase(c, e) {
+    const written = e.w || e.n;
+    const mode = c.grand ? 'grand' : e.clef;
+    const staff = staffOpts(c, mode, [[{ n: written, clef: e.clef }]], e.ott ? { ottava: { text: e.ott, side: e.ott === '8va' ? 'above' : 'below', from: 0, to: 0 } } : {});
+    const r = route(written, e.clef, true);
+    const rh = route(written, e.clef, false);
+    let ex = `The note is ${NAME(e.n)}. ${r.answerHTML}`;
+    if (e.ott) ex = `Written ${NAME(written)} with <b>${e.ott}</b>: play it an octave ${e.ott === '8va' ? 'higher' : 'lower'}, which is ${NAME(e.n)}. ` + r.html;
+    return { staff, hint: rh.html + (e.ott ? ` The <b>${e.ott}</b> sign moves it an octave ${e.ott === '8va' ? 'up' : 'down'}.` : ''), explain: ex, written, clef: e.clef };
+  }
+  function qRead(c) {
+    const e = wpick(c.staff, c);
+    const b = readBase(c, e);
+    return {
+      type: 'read', ids: [e.id], text: e.ott ? `Play this note. Mind the <b>${e.ott}</b>.` : 'Play this note.',
+      staff: b.staff, answer: { kind: 'key', targets: [midiOf(e.n)] }, hint: b.hint, explain: b.explain, shown: e.n, clef: e.clef,
+    };
+  }
+  function qReadName(c) {
+    const e = wpick(c.staff, c);
+    const b = readBase(c, e);
+    const parts = c.L.pad || { letter: true };
+    return {
+      type: 'readName', ids: [e.id], text: parts.oct ? 'Name this note, with its octave number.' : 'Name this note.',
+      staff: b.staff, answer: { kind: 'name', parts, target: e.n, strict: true }, hint: b.hint, explain: b.explain, shown: e.n, clef: e.clef,
+    };
+  }
+
+  // ---- locate / identify --------------------------------------------------------
+  const KEY_TIPS = {
+    0: 'C is the white key just <b>left of a pair</b> of black keys.',
+    1: 'D sits <b>between the two black keys</b> of a pair.',
+    2: 'E is the white key just <b>right of a pair</b>.',
+    3: 'F is the white key just <b>left of a triple</b>.',
+    4: 'G sits under the gap between the <b>first and second</b> black keys of a triple.',
+    5: 'A sits under the gap between the <b>second and third</b> black keys of a triple.',
+    6: 'B is the white key just <b>right of a triple</b>.',
+  };
+  function keyExplain(L, n) {
+    if (n.a !== 0) {
+      const base = fromStep(stepOf(n), 0);
+      return `${NAME(n)} is one key ${n.a > 0 ? 'right' : 'left'} of ${NAME(base)}${Math.abs(n.a) > 1 ? ' (twice)' : ''}.`;
+    }
+    if (L.id === 2) return `${NAME(n)} is a C. Count the Cs from the left: the number goes up at every C. Middle C is C4.`;
+    return KEY_TIPS[n.l];
+  }
+  function qLocate(c) {
+    const L = c.L;
+    const e = wpick(c.keys, c);
+    const any = !!L.anyOctave;
+    const target = e.n;
+    const text = any
+      ? `Find any <b>${LETTERS[target.l]}</b> on the keyboard.`
+      : `Find <b>${NAME(target)}</b>${target.a === 0 && stepOf(target) === 28 ? ' (Middle C)' : ''}.`;
+    const pcOf = n => ((midiOf(n) % 12) + 12) % 12;
+    return {
+      type: 'locate', ids: [e.id], text,
+      answer: { kind: 'key', targets: any ? null : [midiOf(target)], accept: any ? (m => ((m % 12) + 12) % 12 === pcOf(target)) : null, anyTarget: midiOf(target) },
+      hint: any ? KEY_TIPS[target.l] : keyExplain(L, target), explain: keyExplain(L, target), shown: target,
+    };
+  }
+  function qIdentify(c) {
+    const L = c.L;
+    const e = wpick(c.keys, c);
+    const parts = L.pad || { letter: true };
+    return {
+      type: 'identify', ids: [e.id], text: parts.fixedLetter ? 'Which octave is this C?' : 'What is the name of the highlighted key?',
+      kbPrompt: { target: midiOf(e.n) },
+      answer: { kind: 'name', parts, target: e.n, strict: !L.anySpelling && !L.anyOctave, anyOctave: !!L.anyOctave, anySpelling: !!L.anySpelling },
+      hint: keyExplain(L, e.n), explain: `The key is ${NAME(e.n)}. ` + keyExplain(L, e.n), shown: e.n,
+    };
+  }
+
+  // ---- place on staff -----------------------------------------------------------
+  function qPlace(c) {
+    const nat = c.staff.filter(e => e.n.a === 0 && !e.ott);
+    if (!nat.length) return null;
+    const e = wpick(nat, c);
+    const clef = e.clef;
+    const r = route(e.n, clef, true);
+    return {
+      type: 'place', ids: [e.id], text: `Where does this key go on the <b>${CLEFS[clef].title.toLowerCase()}</b>? Tap the line or space.`,
+      kbPrompt: { target: midiOf(e.n) },
+      staff: staffOpts(c, clef, [], {}),
+      answer: { kind: 'place', clef, targetPos: posOf(e.n, clef), n: e.n },
+      hint: r.html, explain: `The key is ${NAME(e.n)}. ${r.answerHTML}`, shown: e.n, clef,
+    };
+  }
+
+  // ---- landmark steps -----------------------------------------------------------
+  function qSteps(c) {
+    const L = c.L;
+    if (!L.steps) return null;
+    const lmName = wpick(L.steps.from.map(n => ({ id: 'lm:' + n, n })), c).n;
+    const lm = LM[lmName];
+    const homes = lm.tags.filter(t => c.clefs.includes(t));
+    const clef = homes.length ? pick(homes) : lm.tags[0];
+    let k = 1 + rnd(L.steps.max), dir = Math.random() < 0.5 ? 1 : -1;
+    const inRange = d => { const m = midiOf(fromStep(lm.step + d * k)); return m >= c.kb[0] && m <= c.kb[1]; };
+    if (!inRange(dir)) dir = -dir;
+    if (!inRange(dir)) k = 1;
+    const target = fromStep(lm.step + dir * k);
+    const dirTxt = dir > 0 ? 'up' : 'down';
+    const letters = [];
+    for (let i = 0; i <= k; i++) letters.push(LETTERS[fromStep(lm.step + dir * i).l]);
+    const ext = {};
+    ext[clef] = (c.extent[clef] || [0, 8]).slice();
+    const tp = posOf(target, clef);
+    ext[clef][0] = Math.min(ext[clef][0], tp - 1); ext[clef][1] = Math.max(ext[clef][1], tp + 1);
+    return {
+      type: 'steps', ids: ['st:' + lm.n + (dir > 0 ? '+' : '-') + k], text: `Start on <b>${lm.name}</b> and go <b>${stepPhrase(k, dirTxt)}</b>. Which key is that?`,
+      staff: { clef, cols: [[{ n: lm.note, clef, state: 'lm', label: lm.name }]], extent: ext, targetNote: target },
+      answer: { kind: 'key', targets: [midiOf(target)] },
+      hint: `Say the letters as you move ${dirTxt}: ${letters.join(', ')}...`,
+      explain: `${lm.name} (${NAME(lm.note)}), ${stepPhrase(k, dirTxt)}: ${letters.join(' → ')}. That is ${NAME(target)}.`,
+      shown: target, clef,
+    };
+  }
+
+  // ---- key signatures -----------------------------------------------------------
+  const KS_RANGE = { treble: ['D4', 'G5'], bass: ['F2', 'B3'] };
+  const keyWords = n => {
+    const ls = n > 0 ? SHARP_ORDER.slice(0, n) : FLAT_ORDER.slice(0, -n);
+    return ls.map(l => LETTERS[l] + (n > 0 ? '♯' : '♭')).join(', ');
+  };
+  function qReadKey(c, nameIt) {
+    const L = c.L;
+    const keys = L.keySigs || [1, 2, 3, -1, -2, -3];
+    const clefs = (L.staffClefs || c.clefs).filter(x => KS_RANGE[x]);
+    const clef = pick(clefs);
+    const items = [];
+    keys.forEach(k => items.push({ id: `ks:${k}:${clef}`, k }));
+    const it = wpick(items, c);
+    const km = keyAccs(it.k);
+    const altered = Object.keys(km).map(Number);
+    const [lo, hi] = KS_RANGE[clef].map(s => stepOf(parseNote(s)));
+    let step;
+    if (altered.length && Math.random() < 0.7) {
+      const cand = [];
+      for (let s = lo; s <= hi; s++) if (altered.includes(((s % 7) + 7) % 7)) cand.push(s);
+      step = pick(cand);
+    } else step = lo + rnd(hi - lo + 1);
+    const base = fromStep(step);
+    const n = writtenInKey(base.l, base.o, it.k);
+    const sound = mk(n.l, n.o, n.a);
+    const changed = n.a !== 0;
+    const ex = `${KEYS[it.k]} has ${keyWords(it.k)}. ` + (changed ? `Every ${LETTERS[n.l]} is altered, so this is ${NAME(sound)}.` : `${LETTERS[n.l]} is not in the signature, so it stays natural: ${NAME(sound)}.`);
+    return {
+      type: nameIt ? 'readKeyName' : 'readKey', ids: [it.id], text: nameIt ? 'Name the note that sounds. Check the key signature first.' : 'Play this note. Check the key signature first.',
+      staff: staffOpts(c, clef, [[{ n, clef }]], { keySig: it.k }),
+      answer: nameIt ? { kind: 'name', parts: L.pad || { letter: true, acc: [-1, 0, 1] }, target: sound, strict: true, ignoreOct: true } : { kind: 'key', targets: [midiOf(sound)] },
+      hint: `Key signature: ${keyWords(it.k) || 'none'}. Say these letters before you play.`, explain: ex, shown: sound, clef,
+    };
+  }
+
+  // ---- sight-reading line -------------------------------------------------------
+  function qSeq(c) {
+    const L = c.L;
+    const clef = pick(c.clefs);
+    const keyN = L.seqKeys ? pick(L.seqKeys) : 0;
+    let base = c.staff.filter(e => e.clef === clef && !e.ott);
+    if (L.seqKeys) base = base.filter(e => e.n.a === 0);
+    const seen = new Set();
+    base = base.filter(e => { const k = stepOf(e.n) * 10 + e.n.a; if (seen.has(k)) return false; seen.add(k); return true; })
+      .sort((a, b) => stepOf(a.n) - stepOf(b.n) || a.n.a - b.n.a);
+    if (base.length < 4) return null;
+    const len = L.seqLen || 5;
+    const win = Math.min(base.length, 10);
+    const w0 = rnd(base.length - win + 1);
+    let idx = w0 + rnd(win);
+    const picks = [];
+    for (let i = 0; i < len; i++) {
+      picks.push(base[idx]);
+      let d = pick([-2, -1, -1, 1, 1, 2, 0 + (Math.random() < 0.15 ? 3 : 1), -1]);
+      let ni = idx + d;
+      if (ni < w0 || ni >= w0 + win || ni === idx) ni = idx + (idx - w0 > win / 2 ? -1 : 1);
+      idx = clamp(ni, w0, w0 + win - 1);
+    }
+    const notes = picks.map(e => (L.seqKeys ? writtenInKey(e.n.l, e.n.o, keyN) : e.n));
+    const sounding = notes.map(n => mk(n.l, n.o, n.a));
+    return {
+      type: 'seq', ids: sounding.map(n => `${clef}:${ascii(n)}`), text: `Play this line, one note at a time${keyN ? '. Check the key signature first' : ''}.`,
+      staff: staffOpts(c, clef, notes.map(n => [{ n, clef }]), { keySig: keyN, colW: 46 }),
+      answer: { kind: 'seq', targets: sounding.map(midiOf), notes: sounding },
+      hint: `Find a landmark in the first bar, then follow the steps and skips.${keyN ? ' Key: ' + keyWords(keyN) + '.' : ''}`,
+      explain: sounding.map(NAME).join(' '), shown: sounding[0], clef,
+    };
+  }
+
+  // ---- intervals ----------------------------------------------------------------
+  const IV = ['2nd', '3rd', '4th', '5th', '6th', '7th', 'octave'];
+  function qInterval(c) {
+    const clef = pick(c.clefs.filter(x => x === 'treble' || x === 'bass'));
+    const item = wpick(IV.map(n => ({ id: 'int:' + n, k: IV.indexOf(n) + 1 })), c);
+    const k = item.k;
+    const lowPos = -1 + rnd(12 - k);
+    const lo = noteAtPos(lowPos, clef), hi = noteAtPos(lowPos + k, clef);
+    const letters = []; for (let i = 0; i <= k; i++) letters.push(LETTERS[fromStep(stepOf(lo) + i).l]);
+    return {
+      type: 'interval', ids: [item.id], text: 'What is the interval between these two notes?',
+      staff: staffOpts(c, clef, [[{ n: lo, clef }, { n: hi, clef }]], {}),
+      answer: { kind: 'interval', correct: k, options: IV },
+      hint: 'Count every line and space from the lower note to the upper note, counting both ends.',
+      explain: `${letters.join(' ')}: ${k + 1} letters, so it is ${k === 7 ? 'an' : 'a'} <b>${IV[k - 1]}</b>.`, shown: hi, clef,
+    };
+  }
+
+  // ---- chords -------------------------------------------------------------------
+  const SHAPES = { root: [0, 2, 4], '1st': [2, 4, 7], '2nd': [4, 7, 9] };
+  const SHAPE_NAME = { root: 'root position', '1st': 'first inversion', '2nd': 'second inversion' };
+  function qChord(c) {
+    const L = c.L;
+    const clefs = c.clefs.filter(x => x === 'treble' || x === 'bass');
+    const clef = pick(clefs);
+    const shapes = L.shapes || ['root', '1st', '2nd'];
+    const item = wpick(shapes.flatMap(s => clefs.map(cl => ({ id: `ch:${s}:${cl}`, s, cl }))).filter(x => x.cl === clef), c);
+    const offs = SHAPES[item.s];
+    const r = -1 - Math.min(...offs) + rnd(13 - Math.max(...offs) + Math.min(...offs));
+    const keyN = L.seqKeys && Math.random() < 0.4 ? pick(L.seqKeys) : 0;
+    const notes = offs.map(o => { const base = noteAtPos(r + o, clef); return writtenInKey(base.l, base.o, keyN); });
+    const snd = notes.map(n => mk(n.l, n.o, n.a));
+    const rootNote = snd[item.s === 'root' ? 0 : item.s === '1st' ? 2 : 1];
+    return {
+      type: 'chord', ids: [item.id], text: `Play all the notes of this chord (${SHAPE_NAME[item.s]}). Tap each key.`,
+      staff: staffOpts(c, clef, [notes.map(n => ({ n, clef }))], { keySig: keyN }),
+      answer: { kind: 'chord', targets: snd.map(midiOf), notes: snd },
+      hint: item.s === 'root' ? 'Three lines or three spaces stacked: the bottom note is the root.' : 'Find the biggest gap (a 4th). The upper note of that gap is the root.',
+      explain: `${snd.map(NAME).join(' ')}. Root: ${NAME(rootNote)}, ${SHAPE_NAME[item.s]}.`, shown: snd[0], clef,
+    };
+  }
+
+  const BUILDERS = {
+    read: qRead, readName: qReadName, locate: qLocate, identify: qIdentify, place: qPlace, steps: qSteps,
+    seq: qSeq, interval: qInterval, chord: qChord, readKey: c => qReadKey(c, false), readKeyName: c => qReadKey(c, true),
+  };
+
+  function typesFor(L) { return Object.keys(L.types).filter(t => !(t === 'steps' && !L.steps)); }
+
+  function make(L, filter) {
+    const c = ctxFor(L);
+    const avail = typesFor(L).filter(t => !filter || filter === 'mixed' || t === filter);
+    const types = avail.length ? avail : typesFor(L);
+    for (let tries = 0; tries < 8; tries++) {
+      const t = weightedPick(types, x => L.types[x]);
+      const q = BUILDERS[t](c);
+      if (q) { q.level = L; q.ctx = c; return q; }
+    }
+    const q = BUILDERS[types[0]](c);
+    q.level = L; q.ctx = c;
+    return q;
+  }
+  const reset = () => Object.keys(ctxCache).forEach(k => delete ctxCache[k]);
+  return { make, typesFor, ctxFor, reset };
+})();
+
+/* ---- ui-core.js ---- */
+// ---------------------------------------------------------------------------
+// UI core: helpers, navigation, settings, Learn path, lessons, drill setup.
+// ---------------------------------------------------------------------------
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const VIEW = $('#view');
+const pad2 = n => String(n).padStart(2, '0');
+const mm = ms => Math.round(ms / 100) / 10;
+
+let S = null; // active drill session (see ui-drill.js)
+let tab = 'learn';
+
+const star = on => `<svg class="star${on ? ' on' : ''}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8l2.4 5.3 5.8.6-4.3 3.9 1.2 5.7L10 14.4 4.9 17.3l1.2-5.7L1.8 7.7l5.8-.6z"/></svg>`;
+const stars = n => `<span class="stars" role="img" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => star(i < n)).join('')}</span>`;
+const pct = v => Math.round(v * 100);
+
+// ---- viz helpers (lessons and hero) -------------------------------------------
+function parseShort(s) {
+  const m = /^([A-G](?:bb|b|#|x|)-?\d)(n?)(?:@(\w+))?(?:!(\w+))?(?:\|(.*))?$/.exec(s);
+  if (!m) throw new Error('bad viz note ' + s);
+  const n = parseNote(m[1]);
+  if (m[2]) n.nat = true;
+  return { n, clef: m[3], state: m[4], label: m[5] };
+}
+function vizCols(notes) {
+  return notes.map(x => (Array.isArray(x) ? x : [x]).map(parseShort));
+}
+function renderViz(host, viz) {
+  host.innerHTML = '';
+  if (viz.staff) {
+    const d = document.createElement('div');
+    host.appendChild(d);
+    const o = viz.staff;
+    Staff.mount(d, {
+      clef: o.clef, cols: vizCols(o.notes || []), guides: o.guides, keySig: o.keySig, ottava: o.ottava,
+      colW: (o.notes || []).length > 3 ? 48 : 60, scale: 1.45, aria: 'Lesson diagram',
+    });
+  }
+  if (viz.kb) {
+    const d = document.createElement('div');
+    d.className = 'viz-kb';
+    host.appendChild(d);
+    const k = viz.kb;
+    const kb = Keyboard.mount(d, {
+      lo: midiOf(parseNote(k.lo)), hi: midiOf(parseNote(k.hi)), labels: k.labels, groups: k.groups,
+      onPress: m => Sound.play(m), minKey: 26, maxKey: 52,
+    });
+    Object.entries(k.marks || {}).forEach(([nm, st]) => kb.mark(midiOf(parseNote(nm)), st));
+    if (midiOf(parseNote(k.hi)) - midiOf(parseNote(k.lo)) > 40) kb.scrollTo(60);
+  }
+}
+
+// ---- navigation ------------------------------------------------------------------
+const TABS = ['learn', 'drill', 'explore', 'progress'];
+function setNav() {
+  $$('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+}
+function go(t) {
+  stopSession(true);
+  tab = t;
+  setNav();
+  if (location.hash.slice(1) !== t) history.replaceState(null, '', '#' + t);
+  window.scrollTo(0, 0);
+  ({ learn: viewLearn, drill: viewDrillSetup, explore: viewExplore, progress: viewProgress })[t]();
+}
+
+// ---- settings ----------------------------------------------------------------------
+function applyTheme() {
+  const t = Store.setting('theme');
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+}
+function seg(name, opts, cur) {
+  return `<div class="seg" role="radiogroup" aria-label="${name}">${opts.map(([v, l]) =>
+    `<button type="button" role="radio" aria-checked="${String(v) === String(cur)}" data-set="${name}" data-v="${v}">${l}</button>`).join('')}</div>`;
+}
+function renderSettings() {
+  const st = Store.setting.bind(Store);
+  $('#sheet-body').innerHTML = `
+    <div class="set-row"><div><b>Sound</b><small>Play the note when you press a key.</small></div>${seg('sound', [[true, 'On'], [false, 'Off']], st('sound'))}</div>
+    <div class="set-row"><label for="vol"><b>Volume</b></label><input id="vol" type="range" min="0.1" max="1" step="0.05" value="${st('volume')}"></div>
+    <div class="set-row"><div><b>Landmark guides</b><small>Dashed lines and labels at landmark notes. Auto shows them in Levels 1 to 5.</small></div>${seg('guides', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']], st('guides'))}</div>
+    <div class="set-row"><div><b>Keyboard labels</b><small>Auto marks landmark keys when guides are on.</small></div>${seg('keyLabels', [['auto', 'Auto'], ['none', 'None'], ['landmarks', 'Landmarks'], ['all', 'All']], st('keyLabels'))}</div>
+    <div class="set-row"><div><b>Hints</b><small>Show a Hint button. Hinted answers do not raise mastery.</small></div>${seg('hints', [[true, 'On'], [false, 'Off']], st('hints'))}</div>
+    <div class="set-row"><div><b>Questions per round</b></div>${seg('length', [[10, '10'], [20, '20'], [40, '40']], st('length'))}</div>
+    <div class="set-row"><div><b>Theme</b></div>${seg('theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], st('theme'))}</div>
+    <div class="set-row"><div><b>MIDI keyboard</b><small id="midi-msg">Play the drills on a real keyboard. Needs Chrome or Edge.</small></div><button type="button" class="btn small" id="midi-btn">Connect</button></div>`;
+}
+function openSheet() { renderSettings(); $('#sheet').hidden = false; $('#sheet .sheet-x').focus(); }
+function closeSheet() { $('#sheet').hidden = true; }
+function initSettings() {
+  $('#btn-settings').addEventListener('click', openSheet);
+  $('#sheet').addEventListener('click', e => {
+    if (e.target.id === 'sheet' || e.target.closest('.sheet-x')) return closeSheet();
+    const b = e.target.closest('[data-set]');
+    if (b) {
+      let v = b.dataset.v;
+      if (v === 'true') v = true; else if (v === 'false') v = false; else if (/^\d+$/.test(v)) v = +v;
+      Store.setSetting(b.dataset.set, v);
+      applySettings();
+      renderSettings();
+      return;
+    }
+    if (e.target.id === 'midi-btn') {
+      Sound.connectMIDI(m => App.onKey(m, true)).then(r => { $('#midi-msg').textContent = r.msg; });
+    }
+  });
+  $('#sheet').addEventListener('input', e => { if (e.target.id === 'vol') { Store.setSetting('volume', +e.target.value); Sound.setVolume(+e.target.value); } });
+  $('#btn-sound').addEventListener('click', () => { Store.setSetting('sound', !Store.setting('sound')); applySettings(); });
+}
+function applySettings() {
+  Sound.enabled = Store.setting('sound');
+  Sound.setVolume(Store.setting('volume'));
+  const on = Sound.enabled;
+  const b = $('#btn-sound');
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Sound on' : 'Sound off');
+  b.innerHTML = on
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  applyTheme();
+  if (S) refreshStage();
+}
+
+// ---- Learn path ----------------------------------------------------------------------
+const TIER_BLURB = [
+  'Keys, octaves, and the three core landmarks.',
+  'Each clef in full, the grand staff, and ledger lines.',
+  'Black keys, key signatures, and the far ends of the keyboard.',
+  'Enharmonics, C clefs, intervals, chords and sight-reading.',
+];
+const HERO_NOTES = [['C2', 'bass'], ['F2', 'bass'], ['C3', 'bass'], ['F3', 'bass'], ['C4', 'treble'], ['G4', 'treble'], ['C5', 'treble'], ['G5', 'treble'], ['C6', 'treble']];
+
+function heroStaff(active) {
+  const cols = HERO_NOTES.map(([n, clef]) => [{ n: parseNote(n), clef, state: n === active ? 'target' : 'lm', label: n }]);
+  Staff.mount($('#hero-staff'), { clef: 'grand', cols, colW: 50, scale: 1.3, aria: 'The nine landmark notes on the grand staff' });
+}
+function levelCard(L, rec) {
+  const m = levelMastery(L), started = levelStarted(L);
+  const upNext = L === rec;
+  return `<article class="lvl${upNext ? ' next' : ''}" data-id="${L.id}">
+    <div class="lvl-top"><span class="lvl-n">${pad2(L.id)}</span>${upNext ? '<span class="badge">Up next</span>' : ''}${stars(starsFor(m))}</div>
+    <h3>${L.title}</h3><p>${L.tag}</p>
+    <div class="meter" role="img" aria-label="${pct(m)} percent mastered"><i style="width:${pct(m)}%"></i></div>
+    <small class="muted">${started ? pct(m) + '% mastered' : 'Not started'}</small>
+    <div class="lvl-actions"><button class="btn small" data-act="lesson">Lesson</button><button class="btn small primary" data-act="practice">Practice</button></div>
+  </article>`;
+}
+function viewLearn() {
+  tab = 'learn'; setNav();
+  const rec = LEVELS.find(L => levelMastery(L) < 0.6) || LEVELS[LEVELS.length - 1];
+  const chips = HERO_NOTES.map(([n]) => LM[n]).map(l => `<button class="chip" data-lm="${l.n}"><b>${l.name}</b><span>${l.n}</span></button>`).join('');
+  let html = `<section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">The landmark method</p>
+        <h1>Find a landmark. Count one or two steps. Name the note.</h1>
+        <p>Instead of memorizing every line and space, learn nine anchor notes and read everything else from the nearest one. Tap a landmark to hear it.</p>
+      </div>
+      <div class="hero-chart"><div id="hero-staff"></div><div class="chips">${chips}</div></div>
+    </section>`;
+  TIERS.forEach((t, ti) => {
+    html += `<section class="tier"><h2>${t}<small>${TIER_BLURB[ti]}</small></h2><div class="lvl-grid">${LEVELS.filter(L => L.tier === ti).map(L => levelCard(L, rec)).join('')}</div></section>`;
+  });
+  VIEW.innerHTML = `<div class="wrap">${html}</div>`;
+  heroStaff(null);
+  VIEW.onclick = e => {
+    const chip = e.target.closest('.chip');
+    if (chip) { const l = LM[chip.dataset.lm]; Sound.play(l.midi); heroStaff(l.n); return; }
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const id = +b.closest('.lvl').dataset.id;
+    if (b.dataset.act === 'lesson') openLesson(id, 0); else startSession({ level: id });
+  };
+}
+
+// ---- Lessons ---------------------------------------------------------------------------
+let lessonState = null;
+function openLesson(id, i) {
+  stopSession(true);
+  lessonState = { id, i };
+  tab = 'learn'; setNav();
+  renderLesson();
+  window.scrollTo(0, 0);
+}
+function renderLesson() {
+  const { id, i } = lessonState;
+  const L = LEVEL[id], slides = LESSONS[id] || [], s = slides[i];
+  const last = i === slides.length - 1;
+  VIEW.innerHTML = `<div class="wrap narrow">
+    <div class="crumbs"><button class="btn ghost small" id="les-back">‹ All levels</button><span class="muted">Level ${pad2(id)} · ${L.title}</span></div>
+    <article class="card lesson">
+      <p class="eyebrow">Lesson ${i + 1} of ${slides.length}</p>
+      <h2>${s.h}</h2>
+      <div class="prose">${s.p}</div>
+      <div class="viz" id="viz"></div>
+      <div class="dots" aria-hidden="true">${slides.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="les-nav">
+        <button class="btn" id="les-prev" ${i === 0 ? 'disabled' : ''}>Back</button>
+        ${last ? '<button class="btn primary" id="les-go">Start practice</button>' : '<button class="btn primary" id="les-next">Next</button>'}
+      </div>
+    </article></div>`;
+  if (s.viz) renderViz($('#viz'), s.viz); else $('#viz').hidden = true;
+  $('#les-back').onclick = () => go('learn');
+  $('#les-prev').onclick = () => { lessonState.i--; renderLesson(); window.scrollTo(0, 0); };
+  const nx = $('#les-next'); if (nx) nx.onclick = () => { lessonState.i++; renderLesson(); window.scrollTo(0, 0); };
+  const gp = $('#les-go'); if (gp) gp.onclick = () => startSession({ level: id });
+}
+
+// ---- Drill setup -------------------------------------------------------------------------
+function viewDrillSetup() {
+  tab = 'drill'; setNav();
+  const opts = LEVELS.map(L => `<option value="${L.id}">${pad2(L.id)} · ${L.title}</option>`).join('');
+  const len = Store.setting('length');
+  VIEW.innerHTML = `<div class="wrap narrow">
+    <h1 class="page-h">Drill</h1>
+    <form class="card setup" id="setup">
+      <div class="field"><label for="selLevel">What to practice</label>
+        <select id="selLevel"><option value="smart">Smart review: weakest notes first</option>${opts}</select></div>
+      <div class="field"><label for="selFocus">Question type</label><select id="selFocus"></select></div>
+      <fieldset class="field"><legend>Round</legend>
+        <div class="seg" id="mode">
+          <button type="button" role="radio" aria-checked="true" data-v="steady">${len} questions</button>
+          <button type="button" role="radio" aria-checked="false" data-v="speed">Speed round, 60 s</button>
+        </div></fieldset>
+      <p class="muted" id="setup-note"></p>
+      <button class="btn primary big" type="submit">Start</button>
+    </form>
+    <div class="card" id="bests"></div></div>`;
+  const sel = $('#selLevel'), foc = $('#selFocus');
+  const refresh = () => {
+    const L = sel.value === 'smart' ? null : LEVEL[+sel.value];
+    const types = L ? Questions.typesFor(L) : null;
+    foc.innerHTML = `<option value="mixed">Mixed</option>` + (types || []).map(t => `<option value="${t}">${TYPE_LABELS[t]}</option>`).join('');
+    foc.disabled = !L;
+    $('#setup-note').textContent = L ? L.tag : 'Draws from every level you have started, favoring notes you miss or answer slowly.';
+    $('#bests').innerHTML = `<h3>Speed round best scores</h3>` + (LEVELS.filter(x => Store.best('speed:' + x.id)).map(x => `<div class="row"><span>${pad2(x.id)} · ${x.title}</span><b>${Store.best('speed:' + x.id)}</b></div>`).join('') || '<p class="muted">No speed rounds played yet. Answer as many as you can in 60 seconds.</p>');
+  };
+  sel.onchange = refresh; refresh();
+  $('#mode').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $$('#mode button').forEach(x => x.setAttribute('aria-checked', String(x === b)));
+  };
+  $('#setup').onsubmit = e => {
+    e.preventDefault();
+    startSession({
+      level: sel.value === 'smart' ? 'smart' : +sel.value, filter: foc.value,
+      mode: $('#mode [aria-checked=true]').dataset.v,
+    });
+  };
+}
+
+/* ---- ui-drill.js ---- */
+// ---------------------------------------------------------------------------
+// Drill sessions: question rendering, answer handling, feedback and summary.
+// ---------------------------------------------------------------------------
+const ACC_PLAIN = { '-2': '♭♭', '-1': '♭', '0': '', '1': '♯', '2': '×' };
+const plainName = n => LETTERS[n.l] + ACC_PLAIN[n.a] + n.o;
+const NM = n => nameHTML(n);
+
+function pickSmartLevel() {
+  const started = LEVELS.filter(L => !L.capstone && levelStarted(L) && levelMastery(L) < 0.98);
+  const rec = LEVELS.find(L => !L.capstone && levelMastery(L) < 0.6);
+  if (rec && !started.includes(rec)) started.push(rec);
+  if (!started.length) return LEVELS[0];
+  return weightedPick(started, L => 1.1 - levelMastery(L));
+}
+
+function stopSession() {
+  if (S) { clearInterval(S.timer); clearTimeout(S.adv); }
+  S = null;
+}
+
+function startSession(o) {
+  stopSession();
+  const smart = o.level === 'smart';
+  S = {
+    smart, L: smart ? null : LEVEL[o.level], mode: o.mode || 'steady', filter: o.filter || 'mixed',
+    total: Store.setting('length'), i: 0, correct: 0, streak: 0, best: 0, times: [], missed: [],
+    answered: false, hinted: false, q: null, guideUser: null, kbMarks: {}, cols: null, sel: null, seq: null,
+    timer: null, left: 60, kb: null,
+  };
+  tab = 'drill'; setNav();
+  renderShell();
+  if (S.mode === 'speed') {
+    S.timer = setInterval(() => {
+      if (!S) return;
+      S.left -= 0.25;
+      updateHead();
+      if (S.left <= 0) endSession();
+    }, 250);
+  }
+  nextQuestion();
+  window.scrollTo(0, 0);
+}
+
+function renderShell() {
+  VIEW.innerHTML = `<div class="wrap narrow drill">
+    <div class="d-head">
+      <button class="btn ghost small" id="d-exit">‹ Exit</button>
+      <div class="d-title" id="d-title"></div>
+      <div class="d-stats"><span id="d-count"></span><span id="d-streak"></span></div>
+    </div>
+    <div class="progress" role="progressbar" aria-label="Round progress"><i id="d-bar"></i></div>
+    <section class="card prompt">
+      <div class="q-top">
+        <p id="q-text" class="q-text"></p>
+        <div class="q-tools"><button class="btn small ghost" id="b-hint" title="Shortcut: H">Hint</button><button class="btn small ghost" id="b-guides" aria-pressed="false" title="Shortcut: L">Guides</button></div>
+      </div>
+      <div id="stage" class="stage"></div>
+      <div id="fb" class="fb" aria-live="polite"></div>
+    </section>
+    <section class="card answer" id="ans"></section>
+    <div class="d-foot"><button class="btn primary" id="b-next" hidden>Next</button></div>
+  </div>`;
+  $('#d-exit').onclick = () => go('drill');
+  $('#b-hint').onclick = showHint;
+  $('#b-guides').onclick = () => { S.guideUser = !S.guides; S.guides = S.guideUser; refreshStage(); updateTools(); };
+  $('#b-next').onclick = nextQuestion;
+  $('#ans').onclick = ansClick;
+}
+
+function updateHead() {
+  if (!S) return;
+  const L = S.q ? S.q.level : S.L;
+  $('#d-title').textContent = (S.smart ? 'Smart review · ' : '') + (L ? `Level ${pad2(L.id)} · ${L.title}` : '');
+  if (S.mode === 'speed') {
+    $('#d-count').textContent = `${Math.max(0, Math.ceil(S.left))}s · ${S.correct} right`;
+    $('#d-bar').style.width = Math.max(0, S.left / 60 * 100) + '%';
+  } else {
+    $('#d-count').textContent = `${Math.min(S.i + (S.answered ? 0 : 1), S.total)} of ${S.total}`;
+    $('#d-bar').style.width = (S.i / S.total * 100) + '%';
+  }
+  $('#d-streak').textContent = S.streak > 1 ? `Streak ${S.streak}` : '';
+}
+function updateTools() {
+  const q = S.q;
+  const hint = $('#b-hint'), g = $('#b-guides');
+  hint.hidden = !Store.setting('hints') || S.answered;
+  const hasStaff = !!q.staff;
+  g.hidden = !hasStaff;
+  g.setAttribute('aria-pressed', String(!!S.guides));
+  g.textContent = S.guides ? 'Guides on' : 'Guides off';
+}
+
+function guidesFor(L) {
+  if (S.guideUser !== null) return S.guideUser;
+  const g = Store.setting('guides');
+  return g === 'on' ? true : g === 'off' ? false : L.tier === 0;
+}
+function kbLabelMode(q) {
+  const k = Store.setting('keyLabels');
+  if (k !== 'auto') return k;
+  if (q.type === 'locate' || q.type === 'identify') return 'none';
+  return S.guides ? 'landmarks' : 'none';
+}
+
+// ---- question flow ----------------------------------------------------------------------
+function nextQuestion() {
+  if (!S) return;
+  clearTimeout(S.adv);
+  if (S.mode === 'steady' && S.i >= S.total) return endSession();
+  const L = S.smart ? pickSmartLevel() : S.L;
+  S.q = Questions.make(L, S.filter);
+  S.answered = false; S.hinted = false; S.kbMarks = {}; S.cols = null; S.seq = null; S.placeCols = null;
+  S.sel = { letter: null, acc: 0, oct: null, chord: new Set() };
+  S.guides = guidesFor(L);
+  $('#fb').className = 'fb'; $('#fb').innerHTML = '';
+  $('#b-next').hidden = true;
+  $('#q-text').innerHTML = S.q.text;
+  $('#q-text').classList.toggle('big', S.q.type === 'locate');
+  if (S.q.answer.kind === 'seq') { S.seq = { i: 0, mistakes: 0, bad: S.q.answer.targets.map(() => false), wrongOn: 0 }; setSeqCols(0); }
+  mountStage();
+  mountAnswer();
+  updateHead(); updateTools();
+  S.t0 = performance.now();
+}
+
+function stageStaffOpts() {
+  const q = S.q;
+  const o = Object.assign({}, q.staff, { guides: S.guides, scale: 1.55, aria: 'Notation for this question' });
+  if (S.cols) o.cols = S.cols;
+  return o;
+}
+function mountKbPrompt(host) {
+  const q = S.q;
+  const kb = Keyboard.mount(host, { lo: q.ctx.kb[0], hi: q.ctx.kb[1], labels: kbLabelMode(q), onPress: m => App.onKey(m) });
+  kb.mark(q.kbPrompt.target, S.answered ? 'good' : 'target');
+  kb.scrollTo(q.kbPrompt.target);
+  return kb;
+}
+function mountStage() {
+  const q = S.q, stage = $('#stage');
+  stage.innerHTML = '';
+  stage.hidden = false;
+  if (q.kbPrompt) { mountKbPrompt(stage); return; }
+  if (q.staff && q.answer.kind !== 'place') { Staff.mount(stage, stageStaffOpts()); return; }
+  stage.hidden = true;
+}
+function applyMarks() {
+  if (!S.kb) return;
+  S.kb.clear();
+  Object.entries(S.kbMarks).forEach(([m, st]) => S.kb.mark(+m, st));
+}
+function mountAnswer() {
+  const q = S.q, a = q.answer, ans = $('#ans');
+  S.kb = null;
+  if (a.kind === 'key' || a.kind === 'seq' || a.kind === 'chord') {
+    const [lo, hi] = q.ctx.kb;
+    ans.innerHTML = '<div id="kbhost"></div>';
+    S.kb = Keyboard.mount($('#kbhost'), { lo, hi, labels: kbLabelMode(q), onPress: m => App.onKey(m) });
+    const mid = Math.round((lo + hi) / 2);
+    if (hi - lo > 40) {
+      ans.insertAdjacentHTML('beforeend', '<div class="kb-nav"><button class="btn small ghost" data-kbnav="-1">‹ Lower keys</button><button class="btn small ghost" data-kbnav="1">Higher keys ›</button></div>');
+      S.kb.scrollTo(60);
+    } else S.kb.scrollTo(mid);
+    applyMarks();
+  } else if (a.kind === 'name') mountPad();
+  else if (a.kind === 'interval') {
+    ans.innerHTML = `<div class="pad"><div class="pad-row opts">${a.options.map((o, i) => `<button class="pbtn wide" data-iv="${i + 1}">${o}</button>`).join('')}</div></div>`;
+  } else if (a.kind === 'place') mountPlace();
+}
+function mountPlace(cols) {
+  const q = S.q;
+  const o = Object.assign({}, q.staff, { guides: S.guides, scale: 1.55, aria: 'Tap the line or space' });
+  if (cols) o.cols = cols; else o.onPick = onPlace;
+  Staff.mount($('#ans'), o);
+}
+function refreshStage() {
+  if (!S || !S.q) return;
+  mountStage();
+  if (S.q.answer.kind === 'place') mountPlace(S.placeCols);
+  else if (S.kb) { const sc = S.kb.scroller.scrollLeft; mountAnswer(); S.kb.scroller.scrollLeft = sc; }
+  updateTools();
+}
+
+// ---- name pad ---------------------------------------------------------------------------
+function mountPad() {
+  const q = S.q, a = q.answer, p = a.parts;
+  const lo = Math.floor(q.ctx.kb[0] / 12) - 1, hi = Math.floor(q.ctx.kb[1] / 12) - 1;
+  let html = '<div class="pad">';
+  if (p.fixedLetter) html += `<p class="pad-note">This key is a <b>${p.fixedLetter}</b>.</p>`;
+  else html += `<div class="pad-row" role="group" aria-label="Letter">${LETTERS.map((l, i) => `<button class="pbtn" data-l="${i}" aria-pressed="false">${l}</button>`).join('')}</div>`;
+  if (p.acc) html += `<div class="pad-row" role="group" aria-label="Accidental">${p.acc.map(x => `<button class="pbtn acc${x === 0 ? ' on' : ''}" data-a="${x}" aria-pressed="${x === 0}" aria-label="${x === 0 ? 'natural' : ACC_WORDS[x]}">${accSvg(x)}</button>`).join('')}</div>`;
+  if (p.oct) {
+    let os = ''; for (let o = lo; o <= hi; o++) os += `<button class="pbtn" data-o="${o}" aria-pressed="false">${o}</button>`;
+    html += `<div class="pad-row" role="group" aria-label="Octave number"><span class="pad-lbl">Octave</span>${os}</div>`;
+  }
+  const needCheck = !((p.fixedLetter ? 0 : 1) + (p.acc ? 1 : 0) + (p.oct ? 1 : 0) === 1);
+  if (needCheck) html += '<div class="pad-row"><button class="btn primary" id="pad-check" disabled>Check</button><span class="pad-sel muted" id="pad-sel"></span></div>';
+  html += '</div>';
+  $('#ans').innerHTML = html;
+}
+function padSummary() {
+  const p = S.q.answer.parts, s = S.sel;
+  const l = p.fixedLetter ? LETTERS.indexOf(p.fixedLetter) : s.letter;
+  const txt = (l === null ? '?' : LETTERS[l]) + (p.acc && s.acc ? ACC_PLAIN[s.acc] : '') + (p.oct ? (s.oct === null ? '?' : s.oct) : '');
+  const sel = $('#pad-sel'), chk = $('#pad-check');
+  if (sel) sel.textContent = txt;
+  if (chk) chk.disabled = l === null || (p.oct && s.oct === null);
+}
+function setPad(kind, v) {
+  if (S.answered) return;
+  const p = S.q.answer.parts;
+  if (kind === 'l') S.sel.letter = v; if (kind === 'a') S.sel.acc = v; if (kind === 'o') S.sel.oct = v;
+  $$('#ans [data-' + kind + ']').forEach(b => { const on = +b.dataset[kind] === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  const only = (p.fixedLetter ? 0 : 1) + (p.acc ? 1 : 0) + (p.oct ? 1 : 0) === 1;
+  if (only && (kind === 'l' || kind === 'o')) return checkName();
+  padSummary();
+}
+function checkName() {
+  if (S.answered) return;
+  const a = S.q.answer, p = a.parts, s = S.sel, t = a.target;
+  const letter = p.fixedLetter ? LETTERS.indexOf(p.fixedLetter) : s.letter;
+  if (letter === null || (p.oct && s.oct === null)) return;
+  const acc = p.acc ? s.acc : 0;
+  let ok;
+  if (a.anyOctave) ok = letter === t.l;
+  else if (a.anySpelling) {
+    ok = p.oct ? midiOf(mk(letter, s.oct, acc)) === midiOf(t) : ((PCS[letter] + acc + 120) % 12) === ((midiOf(t) % 12) + 12) % 12;
+  } else ok = letter === t.l && acc === t.a && (!p.oct || a.ignoreOct || s.oct === t.o);
+  const said = LETTERS[letter] + ACC_PLAIN[acc] + (p.oct ? s.oct : '');
+  revealStaff(ok);
+  finish(ok, ok ? '' : `You answered ${said}.`);
+}
+
+// ---- other answers -----------------------------------------------------------------------
+function ansClick(e) {
+  if (!S) return;
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.kbnav) return S.kb.scrollBy(+t.dataset.kbnav);
+  if (t.dataset.l !== undefined) return setPad('l', +t.dataset.l);
+  if (t.dataset.a !== undefined) return setPad('a', +t.dataset.a);
+  if (t.dataset.o !== undefined) return setPad('o', +t.dataset.o);
+  if (t.id === 'pad-check') return checkName();
+  if (t.dataset.iv) {
+    if (S.answered) return;
+    const k = +t.dataset.iv, ok = k === S.q.answer.correct;
+    t.classList.add(ok ? 'good' : 'bad');
+    if (!ok) $$('#ans [data-iv]')[S.q.answer.correct - 1].classList.add('good');
+    revealStaff(ok);
+    finish(ok, ok ? '' : `You answered ${S.q.answer.options[k - 1]}.`);
+  }
+}
+function onPlace(pos, clef) {
+  if (S.answered || clef !== S.q.answer.clef) return;
+  const a = S.q.answer, ok = pos === a.targetPos;
+  const picked = noteAtPos(pos, clef);
+  Sound.play(midiOf(picked));
+  S.placeCols = ok
+    ? [[{ n: a.n, clef, state: 'good', label: plainName(a.n) }]]
+    : [[{ n: picked, clef, state: 'bad', label: plainName(picked) }], [{ n: a.n, clef, state: 'lm', label: plainName(a.n) }]];
+  mountPlace(S.placeCols);
+  finish(ok, ok ? '' : `You placed ${NM(picked)}.`);
+}
+function keyOk(m) { const a = S.q.answer; return a.accept ? a.accept(m) : a.targets.includes(m); }
+function handleKey(m) {
+  Sound.play(m);
+  if (S.answered) return;
+  const a = S.q.answer;
+  if (a.kind === 'key') {
+    const ok = keyOk(m);
+    S.kbMarks[m] = ok ? 'good' : 'bad';
+    if (!ok) (a.targets || [a.anyTarget]).forEach(t => (S.kbMarks[t] = 'good'));
+    applyMarks();
+    revealStaff(ok);
+    finish(ok, ok ? '' : `You played ${NM(noteFromMidi(m))}.`);
+  } else if (a.kind === 'seq') seqPress(m);
+  else if (a.kind === 'chord') chordPress(m);
+}
+function seqPress(m) {
+  const q = S.q, a = q.answer;
+  if (!S.seq) S.seq = { i: 0, mistakes: 0, bad: a.targets.map(() => false), wrongOn: 0 };
+  const sq = S.seq, exp = a.targets[sq.i];
+  if (m === exp) {
+    sq.i++; sq.wrongOn = 0;
+    S.kbMarks = {};
+    if (sq.i >= a.targets.length) {
+      setSeqCols(-1);
+      applyMarks();
+      const ms = performance.now() - S.t0;
+      q.ids.forEach((id, k) => Store.rec(id, !sq.bad[k], ms / q.ids.length, S.hinted));
+      return finish(sq.mistakes === 0, sq.mistakes ? `You had ${sq.mistakes} wrong ${sq.mistakes === 1 ? 'note' : 'notes'}. The line was ${q.explain}.` : '', true);
+    }
+    setSeqCols(sq.i);
+  } else {
+    sq.mistakes++; sq.bad[sq.i] = true; sq.wrongOn++;
+    S.kbMarks = { [m]: 'bad' };
+    if (sq.wrongOn >= 2) S.kbMarks[exp] = 'target';
+    setSeqCols(sq.i);
+    setTimeout(() => { if (S && S.seq === sq && S.kbMarks[m] === 'bad') { delete S.kbMarks[m]; applyMarks(); } }, 450);
+  }
+  applyMarks();
+}
+function setSeqCols(cur) {
+  const q = S.q, notes = q.staff.cols.map(c => c[0].n);
+  S.cols = notes.map((n, i) => [{ n, clef: q.staff.cols[i][0].clef, state: i < (cur < 0 ? 99 : cur) ? (S.seq.bad[i] ? 'bad' : 'good') : i === cur ? 'target' : 'ink', label: i < (cur < 0 ? 99 : cur) ? plainName(q.answer.notes[i]) : '' }]);
+  mountStage();
+}
+function chordPress(m) {
+  const a = S.q.answer, set = S.sel.chord;
+  if (set.has(m)) set.delete(m); else set.add(m);
+  S.kbMarks = {};
+  set.forEach(x => (S.kbMarks[x] = 'sel'));
+  applyMarks();
+  if (set.size < a.targets.length) return;
+  const ok = [...set].sort().join() === a.targets.slice().sort((x, y) => x - y).join();
+  S.kbMarks = {};
+  a.targets.forEach(t => (S.kbMarks[t] = 'good'));
+  set.forEach(x => { if (!a.targets.includes(x)) S.kbMarks[x] = 'bad'; });
+  applyMarks();
+  revealStaff(ok);
+  finish(ok, ok ? '' : `You played ${[...set].sort((x, y) => x - y).map(x => NM(noteFromMidi(x))).join(' ')}.`);
+}
+/** Recolour the staff note(s) once the answer is known and name them underneath. */
+function revealStaff(ok) {
+  const q = S.q;
+  if (!q.staff || q.answer.kind === 'place') return;
+  const cols = q.staff.cols.map(c => c.map(it => Object.assign({}, it, q.type === 'steps' ? {} : { state: ok ? 'good' : 'lm' })));
+  if (q.type === 'steps') {
+    cols.push([{ n: q.staff.targetNote, clef: q.staff.cols[0][0].clef, state: ok ? 'good' : 'target', label: plainName(q.staff.targetNote) }]);
+  } else if (q.type === 'chord') {
+    cols[0].forEach((it, i) => (it.label = ''));
+  } else if (q.type !== 'interval' && cols.length === 1 && cols[0].length === 1) {
+    cols[0][0].label = plainName(q.shown);
+  }
+  S.cols = cols;
+  mountStage();
+}
+
+// ---- feedback -------------------------------------------------------------------------------
+function showHint() {
+  if (!S || S.answered || !Store.setting('hints')) return;
+  S.hinted = true;
+  const fb = $('#fb');
+  fb.className = 'fb hint';
+  fb.innerHTML = `<b>Hint.</b> ${S.q.hint}`;
+}
+function replay() {
+  const a = S.q.answer;
+  if (a.targets) { if (a.kind === 'seq') Sound.playSeq(a.targets); else if (a.kind === 'chord') Sound.playChord(a.targets); else Sound.play(a.targets[0]); }
+  else if (S.q.shown) Sound.play(midiOf(S.q.shown));
+}
+function finish(ok, extra, noRec) {
+  if (!S || S.answered) return;
+  S.answered = true;
+  const q = S.q, ms = performance.now() - S.t0;
+  if (!noRec && q.type !== 'seq') q.ids.forEach(id => Store.rec(id, ok, ms, S.hinted));
+  S.i++; S.times.push(ms);
+  if (q.kbPrompt) mountStage();
+  if (ok) { S.correct++; S.streak++; S.best = Math.max(S.best, S.streak); } else { S.streak = 0; S.missed.push(q); }
+  const fb = $('#fb');
+  fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+  const play = q.answer.targets || q.shown ? '<button class="btn small ghost" id="b-hear">Hear it</button>' : '';
+  if (ok) {
+    fb.innerHTML = `<span><b>Correct.</b> ${q.type === 'seq' || q.type === 'chord' ? q.explain : q.type === 'interval' ? '<b>' + q.answer.options[q.answer.correct - 1] + '</b>' : NM(q.shown)}${S.hinted ? ' <span class="muted">(hint used)</span>' : ''}</span>${play}`;
+  } else {
+    fb.innerHTML = `<span><b>Not quite.</b> ${extra ? extra + ' ' : ''}${q.type === 'seq' ? '' : q.explain}</span>${play}`;
+  }
+  const hear = $('#b-hear'); if (hear) hear.onclick = replay;
+  updateHead(); updateTools();
+  const fast = S.mode === 'speed';
+  if (ok) S.adv = setTimeout(nextQuestion, fast ? 350 : 800);
+  else if (fast) S.adv = setTimeout(nextQuestion, 1600);
+  else { $('#b-next').hidden = false; $('#b-next').focus({ preventScroll: true }); }
+}
+
+// ---- end of round ------------------------------------------------------------------------------
+function endSession() {
+  const s = S;
+  if (!s) return;
+  clearInterval(s.timer); clearTimeout(s.adv);
+  const n = s.i, acc = n ? s.correct / n : 0;
+  const avg = n ? s.times.reduce((a, b) => a + b, 0) / n : 0;
+  let newBest = false;
+  if (s.mode === 'speed' && !s.smart) newBest = Store.setBest('speed:' + s.L.id, s.correct);
+  if (s.mode === 'speed' && s.smart) newBest = Store.setBest('speed:smart', s.correct);
+  const L = s.L, next = L && LEVEL[L.id + 1];
+  const missed = new Map();
+  s.missed.forEach(q => { const k = q.type === 'seq' ? 'line' + Math.random() : q.ids[0]; if (!missed.has(k)) missed.set(k, q); });
+  const rows = [...missed.values()].slice(0, 8).map(q => `<li>${q.type === 'seq' ? 'Line: ' + q.explain : NM(q.shown) + (q.clef ? ` <span class="muted">${CLEFS[q.clef].title.toLowerCase()}</span>` : '')}</li>`).join('');
+  const ready = L && levelMastery(L) >= 0.6 && next;
+  VIEW.innerHTML = `<div class="wrap narrow"><section class="card summary">
+    <p class="eyebrow">${s.mode === 'speed' ? 'Speed round' : 'Round'} complete</p>
+    <h2>${s.correct} of ${n} correct${newBest ? ' · new best' : ''}</h2>
+    <div class="tiles">
+      <div><b>${pct(acc)}%</b><span>accuracy</span></div>
+      <div><b>${mm(avg) || 0}s</b><span>average time</span></div>
+      <div><b>${s.best}</b><span>best streak</span></div>
+    </div>
+    ${rows ? `<h3>Review these</h3><ul class="missed">${rows}</ul>` : '<p>Clean round. Nothing to review.</p>'}
+    ${L ? `<div class="meter"><i style="width:${pct(levelMastery(L))}%"></i></div><small class="muted">Level ${pad2(L.id)} is ${pct(levelMastery(L))}% mastered</small>` : ''}
+    <div class="les-nav">
+      <button class="btn" id="s-back">All levels</button>
+      <button class="btn${ready ? '' : ' primary'}" id="s-again">Go again</button>
+      ${ready ? `<button class="btn primary" id="s-next">Level ${pad2(next.id)}: ${next.title}</button>` : ''}
+    </div></section></div>`;
+  const o = { level: s.smart ? 'smart' : s.L.id, mode: s.mode, filter: s.filter };
+  stopSession();
+  $('#s-back').onclick = () => go('learn');
+  $('#s-again').onclick = () => startSession(o);
+  if (ready) $('#s-next').onclick = () => startSession({ level: next.id });
+  window.scrollTo(0, 0);
+}
+
+// ---- keyboard shortcuts ---------------------------------------------------------------------------
+function drillKeydown(e) {
+  if (!S || !S.q || e.ctrlKey || e.metaKey || e.altKey) return false;
+  if (e.target.closest && e.target.closest('input,select,textarea')) return false;
+  const k = e.key, a = S.q.answer;
+  if (S.answered) {
+    if (k === 'Enter' || k === ' ') { if (S.mode !== 'speed' && !$('#b-next').hidden) { e.preventDefault(); nextQuestion(); return true; } }
+    return false;
+  }
+  if (k === 'h' || k === 'H') { showHint(); return true; }
+  if (k === 'l' || k === 'L') { if (S.q.staff) $('#b-guides').click(); return true; }
+  if (a.kind !== 'name') return false;
+  const p = a.parts;
+  if (/^[a-gA-G]$/.test(k) && !p.fixedLetter) { setPad('l', LETTERS.indexOf(k.toUpperCase())); return true; }
+  if (p.acc && (k === 'ArrowUp' || k === 'ArrowDown')) {
+    const i = p.acc.indexOf(S.sel.acc), j = clamp(i + (k === 'ArrowUp' ? 1 : -1), 0, p.acc.length - 1);
+    setPad('a', p.acc[j]); e.preventDefault(); return true;
+  }
+  if (p.oct && /^\d$/.test(k)) { if ($(`#ans [data-o="${k}"]`)) setPad('o', +k); return true; }
+  if (k === 'Enter') { checkName(); return true; }
+  return false;
+}
+
+/* ---- ui-explore.js ---- */
+// ---------------------------------------------------------------------------
+// Explore (interactive landmark map) and Progress views.
+// ---------------------------------------------------------------------------
+const ex = { clef: 'grand', n: parseNote('C4'), nClef: 'treble', acc: 0, guides: true, labels: 'landmarks', kb: null };
+
+function exClefFor(n) { return ex.clef === 'grand' ? (stepOf(n) >= 28 ? 'treble' : 'bass') : ex.clef; }
+function exSet(n, clef, play = true) {
+  ex.n = n; ex.nClef = clef || exClefFor(n);
+  if (play) Sound.play(midiOf(n));
+  exRender(false);
+}
+function explorePick(m) { exSet(noteFromMidi(m, ex.acc < 0)); }
+
+function exInfo() {
+  const n = ex.n, m = midiOf(n);
+  const hz = 440 * Math.pow(2, (m - 69) / 12);
+  const black = isBlackMidi(m);
+  const alt = black ? noteFromMidi(m, n.a > 0) : null;
+  const r = route(n, ex.nClef, true);
+  const toC = Math.abs(stepOf(n) - 28);
+  return `<div class="info-main"><div class="info-name">${nameHTML(n)}</div>
+      <div class="info-meta">${black && alt && ascii(alt) !== ascii(n) ? `also ${nameHTML(alt)} · ` : ''}MIDI ${m} · ${hz.toFixed(hz < 100 ? 1 : 0)} Hz</div></div>
+    <div class="info-route"><b>Landmark route.</b> ${r.answerHTML}${n.a ? ' The accidental moves it one key ' + (n.a > 0 ? 'right' : 'left') + ' of the written line or space.' : ''}
+      <span class="muted"> ${toC === 0 ? 'This is Middle C.' : `${toC} ${toC === 1 ? 'letter' : 'letters'} ${stepOf(n) > 28 ? 'above' : 'below'} Middle C.`}</span></div>`;
+}
+function exRender(full = true) {
+  const n = ex.n, clef = ex.nClef;
+  const staffMode = ex.clef;
+  const extent = staffMode === 'grand' ? { treble: [-4, 13], bass: [-4, 13] } : { [staffMode]: [-6, 14] };
+  const item = { n, clef: staffMode === 'grand' ? clef : undefined, state: 'lm', label: plainName(n) };
+  Staff.mount($('#ex-staff'), {
+    clef: staffMode, cols: [[item]], extent, guides: ex.guides, scale: 1.5, aria: 'Selected note on the staff',
+    onPick: (pos, c) => exSet(noteAtPos(pos, c, ex.acc), c),
+  });
+  $('#ex-info').innerHTML = exInfo();
+  if (!ex.kb || full) return;
+  ex.kb.clear();
+  ex.kb.mark(midiOf(n), 'target');
+}
+function exKeyboard() {
+  const lab = ex.labels;
+  ex.kb = Keyboard.mount($('#ex-kb'), { lo: 21, hi: 108, labels: lab, onPress: m => explorePick(m), minKey: 30, maxKey: 44 });
+  ex.kb.mark(midiOf(ex.n), 'target');
+  ex.kb.scrollTo(midiOf(ex.n));
+}
+function viewExplore() {
+  tab = 'explore'; setNav();
+  const chips = LANDMARKS.slice().sort((a, b) => a.midi - b.midi).map(l => `<button class="chip" data-lm="${l.n}"><b>${l.name}</b><span>${l.n}</span></button>`).join('');
+  VIEW.innerHTML = `<div class="wrap">
+    <h1 class="page-h">Explore</h1>
+    <p class="lead">Tap a key, or tap a line or space on the staff. You get the name and the shortest route from a landmark.</p>
+    <section class="card ex">
+      <div class="toolbar">
+        <div class="tb"><span>Clef</span>${seg('exclef', [['grand', 'Grand'], ['treble', 'Treble'], ['bass', 'Bass'], ['alto', 'Alto'], ['tenor', 'Tenor']], ex.clef)}</div>
+        <div class="tb"><span>Accidental</span>${seg('exacc', [[-1, '♭'], [0, '♮'], [1, '♯']], ex.acc)}</div>
+        <div class="tb"><span>Guides</span>${seg('exguides', [[true, 'On'], [false, 'Off']], ex.guides)}</div>
+        <div class="tb"><span>Key labels</span>${seg('exlabels', [['none', 'None'], ['landmarks', 'Landmarks'], ['all', 'All']], ex.labels)}</div>
+      </div>
+      <div id="ex-staff"></div>
+      <div class="info" id="ex-info"></div>
+      <div id="ex-kb"></div>
+      <div class="kb-nav"><button class="btn small ghost" data-kbnav="-1">‹ Lower keys</button><button class="btn small ghost" data-kbnav="1">Higher keys ›</button></div>
+    </section>
+    <section class="card"><h3>Landmarks</h3><div class="chips">${chips}</div></section>
+  </div>`;
+  exKeyboard(); exRender(true);
+  VIEW.onclick = e => {
+    const chip = e.target.closest('.chip');
+    if (chip) { const l = LM[chip.dataset.lm]; exSet(l.note, undefined); return; }
+    const nav = e.target.closest('[data-kbnav]');
+    if (nav) return ex.kb.scrollBy(+nav.dataset.kbnav);
+    const b = e.target.closest('[data-set]');
+    if (!b) return;
+    const k = b.dataset.set, v = b.dataset.v;
+    if (k === 'exclef') { ex.clef = v; ex.nClef = exClefFor(ex.n); }
+    if (k === 'exacc') { ex.acc = +v; ex.n = fromStep(stepOf(ex.n), ex.acc); }
+    if (k === 'exguides') ex.guides = v === 'true';
+    if (k === 'exlabels') ex.labels = v;
+    $$('[data-set="' + k + '"]', VIEW).forEach(x => x.setAttribute('aria-checked', String(x === b)));
+    if (k === 'exlabels') exKeyboard();
+    if (k === 'exacc') Sound.play(midiOf(ex.n));
+    exRender(false);
+  };
+}
+
+// ---- Progress -----------------------------------------------------------------------------------
+function idNote(id) {
+  const m = /^(treble|bass|alto|tenor):([A-G](?:bb|b|#|x|)-?\d)\*?$/.exec(id);
+  if (!m) return null;
+  try { return { clef: m[1], n: parseNote(m[2]) }; } catch (e) { return null; }
+}
+function viewProgress() {
+  tab = 'progress'; setNav();
+  const d = Store.all();
+  const items = d.items;
+  const heat = {};
+  Object.entries(items).forEach(([id, it]) => {
+    const p = idNote(id);
+    if (!p || !it.n) return;
+    const m = midiOf(p.n);
+    heat[m] = Math.max(heat[m] === undefined ? -1 : heat[m], it.b);
+  });
+  const total = d.totals.q, acc = total ? d.totals.ok / total : 0;
+  const days = Object.keys(d.days).length;
+  const allStaff = new Map();
+  LEVELS.forEach(L => (L.staff || []).forEach(e => allStaff.set(e.id, e)));
+  const masteredN = [...allStaff.keys()].filter(id => Store.box(id) >= Store.MASTERED).length;
+  const weak = Object.entries(items).map(([id, it]) => ({ id, it, p: idNote(id) }))
+    .filter(x => x.p && x.it.n && x.it.b < Store.MASTERED)
+    .sort((a, b) => a.it.b - b.it.b || (a.it.c / a.it.n) - (b.it.c / b.it.n) || b.it.ms - a.it.ms).slice(0, 8);
+  const lvl = LEVELS.map(L => { const m = levelMastery(L); return `<div class="row lv"><span>${pad2(L.id)} · ${L.title}</span><span class="meter sm"><i style="width:${pct(m)}%"></i></span><b>${pct(m)}%</b></div>`; }).join('');
+  VIEW.innerHTML = `<div class="wrap">
+    <h1 class="page-h">Progress</h1>
+    <div class="tiles big">
+      <div><b>${total}</b><span>answers</span></div>
+      <div><b>${total ? pct(acc) + '%' : '–'}</b><span>accuracy</span></div>
+      <div><b>${masteredN}<small> / ${allStaff.size}</small></b><span>staff notes mastered</span></div>
+      <div><b>${days}</b><span>days practiced</span></div>
+    </div>
+    <section class="card"><h3>Keyboard map</h3><p class="muted">Each key shows how well you read it from the staff. Unplayed keys stay plain.</p>
+      <div id="heat"></div>
+      <div class="legend"><span><i class="sw h0"></i>shaky</span><span><i class="sw h2"></i>learning</span><span><i class="sw h3"></i>solid</span><span><i class="sw h5"></i>automatic</span></div>
+      <div class="kb-nav"><button class="btn small ghost" data-kbnav="-1">‹ Lower keys</button><button class="btn small ghost" data-kbnav="1">Higher keys ›</button></div>
+    </section>
+    <div class="two">
+      <section class="card"><h3>Needs work</h3>${weak.length ? `<ul class="missed">${weak.map(w => `<li>${nameHTML(w.p.n)} <span class="muted">${CLEFS[w.p.clef].title.toLowerCase()} · ${Math.round(100 * w.it.c / w.it.n)}% right</span></li>`).join('')}</ul>` : '<p class="muted">Nothing flagged yet. Do a few drills and your weakest notes will show up here.</p>'}
+        ${weak.length ? '<button class="btn small primary" id="p-smart">Practice these</button>' : ''}</section>
+      <section class="card"><h3>Levels</h3>${lvl}</section>
+    </div>
+    <section class="card"><h3>Reset</h3><p class="muted">Erase all progress stored in this browser.</p><div id="reset-zone"><button class="btn small" id="p-reset">Reset progress</button></div></section>
+  </div>`;
+  const kb = Keyboard.mount($('#heat'), { lo: 21, hi: 108, labels: 'c', minKey: 28, maxKey: 44 });
+  Object.entries(heat).forEach(([m, b]) => kb.mark(+m, 'h' + b));
+  kb.scrollTo(60);
+  VIEW.onclick = e => {
+    const nav = e.target.closest('[data-kbnav]');
+    if (nav) return kb.scrollBy(+nav.dataset.kbnav);
+    if (e.target.id === 'p-smart') return startSession({ level: 'smart' });
+    if (e.target.id === 'p-reset') {
+      $('#reset-zone').innerHTML = '<p>This cannot be undone.</p><button class="btn small danger" id="p-reset-yes">Erase everything</button> <button class="btn small ghost" id="p-reset-no">Cancel</button>';
+    } else if (e.target.id === 'p-reset-no') $('#reset-zone').innerHTML = '<button class="btn small" id="p-reset">Reset progress</button>';
+    else if (e.target.id === 'p-reset-yes') { Store.reset(); Questions.reset(); viewProgress(); }
+  };
+}
+
+/* ---- main.js ---- */
+// ---------------------------------------------------------------------------
+// Boot: wire navigation, keyboard shortcuts, MIDI routing and the first view.
+// ---------------------------------------------------------------------------
+const App = {
+  /** A piano key was pressed on screen or on a MIDI keyboard. */
+  onKey(m, fromMidi) {
+    if (S && S.q) {
+      if (fromMidi && S.kb) S.kb.flash(m);
+      handleKey(m);
+    } else {
+      Sound.play(m);
+      if (tab === 'explore' && fromMidi) explorePick(m);
+    }
+  },
+};
+
+(function boot() {
+  applySettings();
+  initSettings();
+  Sound.setMidiHandler(m => App.onKey(m, true));
+  $('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.tab); });
+  $('.brand').addEventListener('click', e => { e.preventDefault(); go('learn'); });
+  document.addEventListener('pointerdown', () => Sound.ensure(), { once: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (!$('#sheet').hidden) return closeSheet();
+      if (S) return go('drill');
+    }
+    if (!$('#sheet').hidden) return;
+    if (drillKeydown(e)) return;
+    if (lessonState && tab === 'learn' && $('.lesson')) {
+      if (e.key === 'ArrowRight' && $('#les-next')) $('#les-next').click();
+      if (e.key === 'ArrowLeft' && !$('#les-prev').disabled) $('#les-prev').click();
+    }
+  });
+  window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (TABS.includes(t) && t !== tab) go(t); });
+  const first = location.hash.slice(1);
+  go(TABS.includes(first) ? first : 'learn');
+})();
+
+</script>
