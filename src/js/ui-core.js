@@ -15,6 +15,19 @@ const star = on => `<svg class="star${on ? ' on' : ''}" viewBox="0 0 20 20" aria
 const stars = n => `<span class="stars" role="img" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => star(i < n)).join('')}</span>`;
 const pct = v => Math.round(v * 100);
 
+// ---- interactive machines (Anatomy figures) -----------------------------------------
+const FIGURE = { rail: FigLandmarkRail, action: FigKeyAction };
+function isoTheme() {
+  const t = Store.setting('theme');
+  return t === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : t;
+}
+function syncIso() { $$('.iso').forEach(el => el.setAttribute('data-theme', isoTheme())); }
+function mountFigure(host, name) {
+  const fig = FIGURE[name];
+  host.innerHTML = `<div class="iso fig" data-theme="${isoTheme()}">${fig.card}</div>`;
+  fig.mount($('.iso-figure', host));
+}
+
 // ---- viz helpers (lessons and hero) -------------------------------------------
 function parseShort(s) {
   const m = /^([A-G](?:bb|b|#|x|)-?\d)(n?)(?:@(\w+))?(?:!(\w+))?(?:\|(.*))?$/.exec(s);
@@ -28,6 +41,11 @@ function vizCols(notes) {
 }
 function renderViz(host, viz) {
   host.innerHTML = '';
+  if (viz.figure) {
+    const d = document.createElement('div');
+    host.appendChild(d);
+    mountFigure(d, viz.figure);
+  }
   if (viz.staff) {
     const d = document.createElement('div');
     host.appendChild(d);
@@ -70,6 +88,7 @@ function applyTheme() {
   const t = Store.setting('theme');
   if (t === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
+  syncIso();
 }
 function seg(name, opts, cur) {
   return `<div class="seg" role="radiogroup" aria-label="${name}">${opts.map(([v, l]) =>
@@ -162,8 +181,16 @@ function viewLearn() {
   TIERS.forEach((t, ti) => {
     html += `<section class="tier"><h2>${t}<small>${TIER_BLURB[ti]}</small></h2><div class="lvl-grid">${LEVELS.filter(L => L.tier === ti).map(L => levelCard(L, rec)).join('')}</div></section>`;
   });
+  html = html.replace('</section><section class="tier">', `</section>
+    <section class="machine"><div class="machine-copy"><p class="eyebrow">See it work</p><h2>The landmark rail</h2>
+      <p>Slide along the keys. The reel of the nearest landmark pays out its tape, one tick per step, and the dial counts them. On this rail no key is ever more than two steps from a landmark. Tap a key to hear it.</p></div><div id="fig-rail"></div></section>
+    <section class="tier">`);
+  html += `<section class="machine"><div class="machine-copy"><p class="eyebrow">Inside the piano</p><h2>What one key sets in motion</h2>
+      <p>A key is a lever. Press it and a chain of levers throws a felt hammer at the strings, then lets it fly free. Hold the key, drag it down slowly, or let the demo run.</p></div><div id="fig-action"></div></section>`;
   VIEW.innerHTML = `<div class="wrap">${html}</div>`;
   heroStaff(null);
+  mountFigure($('#fig-rail'), 'rail');
+  mountFigure($('#fig-action'), 'action');
   VIEW.onclick = e => {
     const chip = e.target.closest('.chip');
     if (chip) { const l = LM[chip.dataset.lm]; Sound.play(l.midi); heroStaff(l.n); return; }

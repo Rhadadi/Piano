@@ -40,6 +40,9 @@ const LESSONS = {
     { h: 'Why landmarks beat memorizing',
       p: `<p>Memorizing 20 lines and spaces is slow. With landmarks you find the nearest one and count a step or two. Three landmarks cover the middle of the piano. Later you add more Cs, Gs and Fs for the edges.</p>`,
       viz: { staff: { clef: 'grand', guides: true, notes: ['F3@bass!lm|F', 'C4@treble!lm|C', 'G4@treble!lm|G'] }, kb: { lo: 'C3', hi: 'C5', labels: 'landmarks' } } },
+    { h: 'See the method as a machine',
+      p: `<p>Here is the whole idea as a measuring rail. Nine reels stand at the landmarks. Wherever you stop, the nearest reel pays out its tape and the dial counts the steps. Try middle C, then a key two steps away.</p>`,
+      viz: { figure: 'rail' } },
   ],
   4: [
     { h: 'A step is the very next letter',

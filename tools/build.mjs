@@ -2,19 +2,26 @@
 //   index.html          standalone page, open it directly in a browser (works offline)
 //   dist/artifact.html  page fragment for hosts that wrap the document themselves
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ISO_CSS } from '../figures/vendor/anatomy/kit/iso-kit.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => readFileSync(join(root, p), 'utf8');
+
+// The two interactive machines are built first; each becomes a self-contained script (FigLandmarkRail, FigKeyAction).
+const FIGURES = ['landmark-rail', 'key-action'];
+FIGURES.forEach(f => execFileSync(process.execPath, [join(root, 'figures', f, 'build.mjs')], { stdio: 'inherit' }));
+const figureJs = FIGURES.map(f => read(`figures/dist/${f}.js`)).join('\n');
 
 const JS_ORDER = [
   'glyphs', 'theory', 'store', 'sound', 'staff', 'keyboard', 'curriculum', 'lessons', 'questions',
   'ui-core', 'ui-drill', 'ui-explore', 'main',
 ];
-const js = JS_ORDER.map(f => `/* ---- ${f}.js ---- */\n` + read(`src/js/${f}.js`).replace(/^'use strict';\n/, '')).join('\n');
-if (js.includes('</script')) throw new Error('script contains </script');
-const css = read('src/style.css');
+// the kit's page builder mentions the closing script tag in a string; keep it from ending the inline script
+const js = [figureJs, ...JS_ORDER.map(f => `/* ---- ${f}.js ---- */\n` + read(`src/js/${f}.js`).replace(/^'use strict';\n/, ''))].join('\n').replace(/<\/(script)/gi, '<\\/$1');
+const css = read('src/style.css') + '\n/* ---- figures (Anatomy kit, MIT) ---- */\n' + ISO_CSS;
 const body = read('src/template.html');
 
 const TITLE = 'Landmark Piano';

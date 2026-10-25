@@ -269,3 +269,16 @@ input[type="range"] { accent-color: var(--accent); width: 160px; }
 .kb-svg .kl[data-s="h0"], .kb-svg .kl[data-s="h5"] { fill: #fff; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* ---------- machines (interactive figures) ---------- */
+.machine { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.machine-copy { display: flex; flex-direction: column; gap: 8px; max-width: 64ch; }
+.machine-copy h2 { font-size: 24px; font-weight: 750; }
+.machine-copy p { color: var(--muted); }
+.fig { max-width: 860px; width: 100%; margin: 0 auto; --anatomy-card: var(--surface); --anatomy-paper: var(--surface); }
+.fig .iso-figure { margin: 8px 0 0; }
+.fig .iso-plate { border-radius: 16px; box-shadow: 0 0 0 1px var(--line), var(--shadow); }
+.fig .iso-stage { cursor: pointer; touch-action: pan-y; user-select: none; -webkit-user-select: none; outline: none; }
+.fig .iso-stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 8px; }
+.fig .iso-legend { font-size: 13px; color: var(--muted); }
+.viz .fig { margin: 0; }

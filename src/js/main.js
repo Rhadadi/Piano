@@ -19,6 +19,9 @@ const App = {
   applySettings();
   initSettings();
   Sound.setMidiHandler(m => App.onKey(m, true));
+  // the interactive machines announce notes (a tapped key, a hammer striking)
+  document.addEventListener('anatomy:note', e => Sound.play(e.detail.midi, { vel: e.detail.velocity || 0.7 }));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncIso);
   $('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.tab); });
   $('.brand').addEventListener('click', e => { e.preventDefault(); go('learn'); });
   document.addEventListener('pointerdown', () => Sound.ensure(), { once: true });
